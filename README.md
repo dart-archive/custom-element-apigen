@@ -10,9 +10,9 @@ To use it, you need to:
   * configure bower to put the packages under `lib/src/` instead of the default
     `bower_components`. For exmaple, with a `.bowerrc` file as follows:
 
-      {
-        "directory": "lib/src"
-      }
+        {
+          "directory": "lib/src"
+        }
 
   * setup your `bower.json` file
   * install packages via `bower install`
