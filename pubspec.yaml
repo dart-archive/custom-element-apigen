@@ -1,11 +1,12 @@
 name: custom_element_apigen
-version: 0.0.1
+version: 0.0.2
 author: Polymer.dart Authors <web-ui-dev@dartlang.org>
 description: Generates Dart API for JS Custom Elements
 homepage: https://github.com/dart-lang/custom-element-apigen
 dependencies:
   html5lib: ">=0.11.0 <0.13.0"
   path: ">=1.0.0 <2.0.0"
+  polymer: ">=0.14.1 <0.15.0"
   yaml: ">=1.0.0 <3.0.0"
 environment:
   sdk: '>=1.6.0 <2.0.0'
