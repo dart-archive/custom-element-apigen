@@ -156,7 +156,7 @@ String generateDirectives(String name, Iterable<String> extendNames,
 
   var packageName = config.global.currentPackage;
   return '''
-// DO NOT EDIT: auto-generated with pub run `custom_element_apigen:update`
+// DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
 /// Dart API for the polymer element `$name`.
 library $packageName.$libName;
