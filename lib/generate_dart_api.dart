@@ -65,6 +65,9 @@ main(args) {
     generateDartApi(fileSummary, elementSummaries, inputPath, fileConfig);
   });
 
+  _progress('Deleting files... ');
+  deleteFilesMatchingPatterns(config.deletionPatterns);
+
   _progress('Generating stubs... ');
   len = config.stubs.length;
   i = 0;
@@ -72,9 +75,6 @@ main(args) {
     _progress('${++i} of $len: $inputPath');
     generateImportStub(inputPath, packageName);
   });
-
-  _progress('Deleting files... ');
-  deleteFilesMatchingPatterns(config.deletionPatterns);
 
   _progress('Done');
   stdout.write('\n');
