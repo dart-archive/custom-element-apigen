@@ -11,13 +11,13 @@ import 'package:path/path.dart' as path;
 import 'src/ast.dart';
 import 'src/codegen.dart';
 import 'src/config.dart';
+export 'src/config.dart' show GlobalConfig;
 import 'src/parser.dart';
 
 bool verbose = false;
 
-main(args) {
+GlobalConfig parseArgs(args, String program) {
   if (args.length == 0) {
-    final program = 'pub run custom_elements_apigen:update';
     print('usage: call this tool with either input files '
         'or a configuration file that describes input files and name '
         'substitutions. For example: ');
@@ -37,6 +37,10 @@ main(args) {
     }
   }
 
+  return config;
+}
+
+void generateWrappers(GlobalConfig config) {
   _progress('Parsing files... ');
   var fileSummaries = [];
   var elementSummaries = {};
@@ -44,7 +48,7 @@ main(args) {
   int i = 0;
   config.files.forEach((inputPath, fileConfig) {
     _progress('${++i} of $len: $inputPath');
-    var summary = parseFile(inputPath);
+    var summary = _parseFile(inputPath);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
       var name = elementSummary.name;
@@ -62,33 +66,40 @@ main(args) {
   config.files.forEach((inputPath, fileConfig) {
     var fileSummary = fileSummaries[i];
     _progress('${++i} of $len: $inputPath');
-    generateDartApi(fileSummary, elementSummaries, inputPath, fileConfig);
+    _generateDartApi(fileSummary, elementSummaries, inputPath, fileConfig);
   });
 
+
+  // We assume that the file has to be there because of bower, even though we
+  // could generate without.
+  _progress('Checking original files exist for stubs');
+  for (var inputPath in config.stubs.keys) {
+    var file = new File(inputPath);
+    if (!file.existsSync()) {
+      print("error: stub file $inputPath doesn't exist");
+      exit(1);
+    }
+  }
+
   _progress('Deleting files... ');
-  deleteFilesMatchingPatterns(config.deletionPatterns);
+  _deleteFilesMatchingPatterns(config.deletionPatterns);
 
   _progress('Generating stubs... ');
   len = config.stubs.length;
   i = 0;
   config.stubs.forEach((inputPath, packageName) {
     _progress('${++i} of $len: $inputPath');
-    generateImportStub(inputPath, packageName);
+    _generateImportStub(inputPath, packageName);
   });
 
   _progress('Done');
   stdout.write('\n');
 }
 
-void generateImportStub(String inputPath, String packageName) {
+void _generateImportStub(String inputPath, String packageName) {
   var file = new File(inputPath);
-
-  // We assume the file has to be there becuase bower, even though we could
-  // generate without
-  if (!file.existsSync()) {
-    print("error: file $inputPath doesn't exist");
-    exit(1);
-  }
+  // File may have been deleted, make sure it still exists.
+  file.createSync(recursive: true);
 
   var segments = path.split(inputPath);
   var newFileName = segments.last.replaceAll('-', '_');
@@ -102,7 +113,7 @@ void generateImportStub(String inputPath, String packageName) {
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-FileSummary parseFile(String inputPath) {
+FileSummary _parseFile(String inputPath) {
   _progressLineBroken = false;
   if (!new File(inputPath).existsSync()) {
     print("error: file $inputPath doesn't exist");
@@ -118,7 +129,7 @@ FileSummary parseFile(String inputPath) {
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
 /// under lib/src/ (for example, lib/src/x-tag/x-tag.html), the output will be
 /// generated under lib/ (for example, lib/x_tag/x_tag.dart).
-void generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
+void _generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
                      String inputPath, FileConfig config) {
   _progressLineBroken = false;
   var segments = path.split(inputPath);
@@ -188,10 +199,14 @@ void generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
       ..writeAsStringSync('$htmlBody$scriptTag');
 }
 
-void deleteFilesMatchingPatterns(List<RegExp> patterns) {
-  new Directory('lib/src').listSync(recursive: true, followLinks: false)
-      .where((file) => patterns.any((pattern) => file.path.contains(pattern)))
-      .forEach((file) => file.deleteSync());
+void _deleteFilesMatchingPatterns(List<RegExp> patterns) {
+  new Directory('lib/src')
+      .listSync(recursive: true, followLinks: false)
+      .where((file) => patterns.any((pattern) =>
+          path.relative(file.path, from: 'lib/src').contains(pattern)))
+      .forEach((file) {
+        if (file.existsSync()) file.deleteSync(recursive: true);
+      });
 }
 
 int _lastLength = 0;

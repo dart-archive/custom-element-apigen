@@ -11,7 +11,9 @@ import 'package:path/path.dart' as path;
 import 'package:custom_element_apigen/generate_dart_api.dart' as generator;
 
 main(args) {
-  generator.main(args);
+  generator.GlobalConfig config =
+      generator.parseArgs(args, 'pub run custom_elements_apigen:update');
+
   // TODO(sigmund): find out if we can use a bower override for this.
   var file = new File(path.join('lib', 'src', 'polymer', 'polymer.html'));
   if (!file.existsSync()) {
@@ -20,6 +22,12 @@ main(args) {
         'to place all sources under `lib/src/`. See README for details.');
     exit(1);
   }
+
+  generator.generateWrappers(config);
+
+  // The file may be deleted at some point during the generator, make sure it
+  // still exists.
+  file.createSync(recursive: true);
   file.writeAsStringSync(_POLYMER_HTML_FORWARD);
 }
 
