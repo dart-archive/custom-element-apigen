@@ -65,6 +65,9 @@ main(args) {
     generateDartApi(fileSummary, elementSummaries, inputPath, fileConfig);
   });
 
+  _progress('Deleting files... ');
+  deleteFilesMatchingPatterns(config.deletionPatterns);
+
   _progress('Generating stubs... ');
   len = config.stubs.length;
   i = 0;
@@ -183,6 +186,12 @@ void generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
   new File(path.join(outputDir, '$name.html'))
       ..createSync(recursive: true)
       ..writeAsStringSync('$htmlBody$scriptTag');
+}
+
+void deleteFilesMatchingPatterns(List<RegExp> patterns) {
+  new Directory('lib/src').listSync(recursive: true, followLinks: false)
+      .where((file) => patterns.any((pattern) => file.path.contains(pattern)))
+      .forEach((file) => file.deleteSync());
 }
 
 int _lastLength = 0;

@@ -17,6 +17,7 @@ class GlobalConfig {
   final Map<String, FileConfig> files = {};
   final Map<String, String> stubs = {};
   final List<PackageMapping> packageMappings = [];
+  final List<RegExp> deletionPatterns = [];
   String currentPackage;
   int _lastUpdated = 0;
 
@@ -75,6 +76,7 @@ void parseConfigFile(String filePath, GlobalConfig config) {
   _parsePackageMappings(yaml, config);
   _parseFilesToGenerate(yaml, config);
   _parseStubsToGenerate(yaml, config);
+  _parseDeletionPatterns(yaml, config);
 
   if (!new File('pubspec.yaml').existsSync()) {
     print("error: file 'pubspec.yaml' doesn't exist");
@@ -134,4 +136,16 @@ void _parseStubsToGenerate(yaml, GlobalConfig config) {
       }
     }
   }
+}
+
+void _parseDeletionPatterns(yaml, GlobalConfig config) {
+  var patterns = yaml['deletion_patterns'];
+  if (patterns == null) return;
+  if (patterns is! YamlList ||
+      (patterns as YamlList).any((e) => e is! String)) {
+    print('Unrecognized deletion_patterns setting, expected a list of Strings');
+    exit(1);
+  }
+  config.deletionPatterns.addAll(
+      (patterns as YamlList).map((pattern) => new RegExp(pattern)));
 }
