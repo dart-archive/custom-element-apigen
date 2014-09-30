@@ -191,7 +191,7 @@ void generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
 void deleteFilesMatchingPatterns(List<RegExp> patterns) {
   new Directory('lib/src').listSync(recursive: true, followLinks: false)
       .where((file) => patterns.any((pattern) => file.path.contains(pattern)))
-      .forEach((file) { file.deleteSync(); });
+      .forEach((file) => file.deleteSync());
 }
 
 int _lastLength = 0;
