@@ -1,3 +1,13 @@
+## 0.1.0
+
+  * **Breaking Change** Removed main() from `generate_dart_api`, 
+    `pub run custom_elements_apigen:update ...` is now the only way you should
+    generate wrappers.
+  * **Breaking Change** `deletion_patterns` option will now delete folders that
+    match the supplied patterns as well as files.
+  * **Breaking Change** Many functions in `generate_dart_api` were moved to be
+    private.
+
 ## 0.0.3
 
 Added deletion_patterns option to the config. This is a list of regex patterns
