@@ -1,5 +1,5 @@
 name: custom_element_apigen
-version: 0.1.0
+version: 0.1.1
 author: Polymer.dart Authors <web-ui-dev@dartlang.org>
 description: Generates Dart API for JS Custom Elements
 homepage: https://github.com/dart-lang/custom-element-apigen
@@ -8,5 +8,9 @@ dependencies:
   path: ">=1.0.0 <2.0.0"
   polymer: ">=0.14.1 <0.16.0"
   yaml: ">=1.0.0 <3.0.0"
+  # TODO(sigmund): maybe remove this dependency? It is required only for the
+  # generated code. We could make the codegen ensure that it is listed in the
+  # pacakge pubspec instead.
+  web_components: ">=0.9.0 <0.10.0"
 environment:
   sdk: '>=1.6.0 <2.0.0'
