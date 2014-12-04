@@ -21,7 +21,9 @@ String generateClass(
   sb.write(_generateHeader(
       element.name, comment, element.extendName, baseExtendName));
   var getDartName = _substituteFunction(config.nameSubstitutions);
-  element.properties.values.forEach((p) => _generateProperty(p, sb, getDartName));
+  _standardProperties.forEach((p) => _generateProperty(p, sb, (s) => s));
+  element.properties.values.forEach(
+          (p) => _generateProperty(p, sb, getDartName));
   element.methods.forEach((m) => _generateMethod(m, sb, getDartName));
   sb.write('}\n');
   sb.write(_generateUpdateMethod(element.name, baseExtendName));
@@ -53,11 +55,11 @@ void _generateProperty(Property property, StringBuffer sb,
   var comment = _toComment(property.description, 2);
   var type = property.type;
   if (type != null) {
-    type = _docToDartType[type];
+    type = _docToDartType[type.toLowerCase()];
   }
   var name = property.name;
   var dartName = getDartName(name);
-  var body = "jsElement['$name']";
+  var body = "jsElement[r'$name']";
   sb.write(comment == '' ? '\n' : '\n$comment\n');
   var t = type != null ? '$type ' : '';
   sb.write('  ${t}get $dartName => $body;\n');
@@ -122,7 +124,7 @@ void _generateArgList(
     first = false;
     var type = arg.type;
     if (type != null) {
-      type = _docToDartType[type];
+      type = _docToDartType[type.toLowerCase()];
     }
     if (type != null) {
       dartArgList..write(type)
@@ -238,11 +240,13 @@ String _toCamelCase(String dashName) => dashName.split('-')
 
 final _docToDartType = {
   'boolean': 'bool',
-  'Boolean': 'bool',
   'array': 'JsArray',
   'string': 'String',
-  'String': 'String',
   'number': 'num',
-  'Object': null, // keep as dynamic
+  'object': null, // keep as dynamic
   'any': null,    // keep as dynamic
 };
+
+final _standardProperties = [
+  new Property('\$', '', hasGetter: true),
+];
