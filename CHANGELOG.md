@@ -1,3 +1,9 @@
+## 0.1.2
+  * Add support for the `$` property.
+
+## 0.1.1
+  * Automatically include `packages/web_components/interop_support.html`.
+
 ## 0.1.0
 
   * **Breaking Change** Removed main() from `generate_dart_api`, 
