@@ -44,6 +44,7 @@ void generateWrappers(GlobalConfig config) {
   _progress('Parsing files... ');
   var fileSummaries = [];
   var elementSummaries = {};
+  var mixinSummaries = {};
   var len = config.files.length;
   int i = 0;
   config.files.forEach((inputPath, fileConfig) {
@@ -58,6 +59,14 @@ void generateWrappers(GlobalConfig config) {
       }
       elementSummaries[name] = elementSummary;
     }
+    for (var mixinSummary in summary.mixins) {
+      var name = mixinSummary.name;
+      if (mixinSummaries.containsKey(name)) {
+        print('Error: found two mixins with the same name ${name}');
+        exit(1);
+      }
+      mixinSummaries[name] = mixinSummary;
+    }
   });
 
   _progress('Running codegen... ');
@@ -66,7 +75,8 @@ void generateWrappers(GlobalConfig config) {
   config.files.forEach((inputPath, fileConfig) {
     var fileSummary = fileSummaries[i];
     _progress('${++i} of $len: $inputPath');
-    _generateDartApi(fileSummary, elementSummaries, inputPath, fileConfig);
+    _generateDartApi(
+        fileSummary, elementSummaries, mixinSummaries, inputPath, fileConfig);
   });
 
 
@@ -113,15 +123,29 @@ void _generateImportStub(String inputPath, String packageName) {
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-FileSummary _parseFile(String inputPath) {
+FileSummary _parseFile(String inputPath, {bool ignoreFileErrors: false}) {
   _progressLineBroken = false;
   if (!new File(inputPath).existsSync()) {
-    print("error: file $inputPath doesn't exist");
-    exit(1);
+    if (ignoreFileErrors) {
+      return new FileSummary();
+    } else {
+      print("error: file $inputPath doesn't exist");
+      exit(1);
+    }
   }
+  var isHtml = inputPath.endsWith('.html');
   var text = new File(inputPath).readAsStringSync();
-  var summary = parsePolymerElements(text,
-  onWarning: (s) => _showMessage('warning: $s'));
+  var summary = new PolymerParser(
+      text, isHtml: isHtml, onWarning: (s) => _showMessage('warning: $s'))
+      .parse();
+
+  if (summary.elements.isEmpty && summary.mixins.isEmpty && isHtml) {
+    // If we didn't find any elements, try to find a corresponding *.js file
+    var jsPath = inputPath.replaceFirst('.html', '.js');
+    var jsSummary = _parseFile(jsPath, ignoreFileErrors: true);
+    summary.elementsMap = jsSummary.elementsMap;
+    summary.mixinsMap = jsSummary.mixinsMap;
+  }
   _showMessage('$summary');
   return summary;
 }
@@ -129,8 +153,9 @@ FileSummary _parseFile(String inputPath) {
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
 /// under lib/src/ (for example, lib/src/x-tag/x-tag.html), the output will be
 /// generated under lib/ (for example, lib/x_tag/x_tag.dart).
-void _generateDartApi(FileSummary summary, Map<String, Element> elementSummaries,
-                     String inputPath, FileConfig config) {
+void _generateDartApi(
+      FileSummary summary, Map<String, Element> elementSummaries,
+      Map<String, Mixin> mixinSummaries, String inputPath, FileConfig config) {
   _progressLineBroken = false;
   var segments = path.split(inputPath);
   if (segments.length < 4 || segments[0] != 'lib' || segments[1] != 'src'
@@ -150,17 +175,25 @@ void _generateDartApi(FileSummary summary, Map<String, Element> elementSummaries
   }
   var outputDir = path.joinAll(outputDirSegments);
 
-  var directives = generateDirectives(name,
-      summary.elements.map((e) => e.extendName), config);
-  var classes = summary.elements.map(
-          (i) => generateClass(i, config, elementSummaries)).join('\n\n');
-
   // Only create a dart file if we found at least one polymer element.
-  var hasDartFile = !summary.elements.isEmpty;
+  var hasDartFile = summary.elements.isNotEmpty || summary.mixins.isNotEmpty;
   if (hasDartFile) {
+    var dartContent = new StringBuffer();
+    dartContent.write(generateDirectives(name, summary, config));
+    var first = true;
+    for (var element in summary.elements) {
+      if (!first) dartContent.write('\n\n');
+      dartContent.write(generateClass(element, config, elementSummaries));
+      first = false;
+    }
+    for (var mixin in summary.mixins) {
+      if (!first) dartContent.write('\n\n');
+      dartContent.write(generateClass(mixin, config, mixinSummaries));
+      first = false;
+    }
     new File(path.join(outputDir, '$name.dart'))
         ..createSync(recursive: true)
-        ..writeAsStringSync('$directives$classes');
+        ..writeAsStringSync(dartContent.toString());
   }
 
   var extraImports = new StringBuffer();

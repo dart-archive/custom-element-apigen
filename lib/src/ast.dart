@@ -11,12 +11,17 @@
 library custom_element_apigen.src.ast;
 
 class FileSummary {
-  List<Import> imports;
-  List<Element> elements;
+  List<Import> imports = [];
+  Map<String, Element> elementsMap = {};
+  Map<String, Mixin> mixinsMap = {};
 
-  FileSummary(this.imports, this.elements);
+  FileSummary();
 
-  String toString() => 'imports: $imports, elements: $elements';
+  Iterable<Element> get elements => elementsMap.values;
+  Iterable<Mixin> get mixins => mixinsMap.values;
+
+  String toString() =>
+      'imports: $imports, elements: $elements, mixins: $mixins';
 }
 
 /// Base class for any entry we parse out of the HTML files.
@@ -54,26 +59,71 @@ class Import extends Entry {
   }
 }
 
-/// Data about a custom-element.
-class Element extends NamedEntry {
+class Class extends NamedEntry {
   final Map<String, Property> properties = {};
   final List<Method> methods = [];
-  final String extendName;
 
-  Element(name, this.extendName) : super(name, '');
+  Class(name) : super(name, '');
 
   void _prettyPrint(StringBuffer sb) {
     sb.write('$name:\n');
+    sb.write('properties:');
     for (var p in properties.values) {
-      sb.write('  - ');
+      sb.write('    - ');
       p._prettyPrint(sb);
       sb.write('\n');
     }
+    sb.write('methods:');
     for (var m in methods) {
-      sb.write('  - ');
+      sb.write('    - ');
       m._prettyPrint(sb);
       sb.write('\n');
     }
+  }
+
+  String toString() {
+    var message = new StringBuffer();
+    _prettyPrint(message);
+    return message.toString();
+  }
+}
+
+class Mixin extends Class {
+  Mixin(name) : super(name);
+
+  _prettyPrint(StringBuffer sb) {
+    sb.writeln('**Mixin**');
+    super._prettyPrint(sb);
+  }
+
+  String toString() {
+    var message = new StringBuffer();
+    _prettyPrint(message);
+    return message.toString();
+  }
+}
+
+/// Data about a custom-element.
+class Element extends Class {
+  String extendName;
+  final List<String> mixins = [];
+
+  Element(name, this.extendName) : super(name);
+
+  void _prettyPrint(StringBuffer sb) {
+    sb.writeln('**Element**');
+    super._prettyPrint(sb);
+    sb.writeln('  mixins:');
+    for (var mixin in mixins) {
+      sb.writeln('    - $mixin');
+    }
+    sb.writeln('  extends: $extendName');
+  }
+
+  String toString() {
+    var message = new StringBuffer();
+    _prettyPrint(message);
+    return message.toString();
   }
 }
 
