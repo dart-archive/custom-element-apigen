@@ -21,7 +21,6 @@ String generateClass(
   sb.write(_generateHeader(
       element.name, comment, element.extendName, baseExtendName));
   var getDartName = _substituteFunction(config.nameSubstitutions);
-  _standardProperties.forEach((p) => _generateProperty(p, sb, (s) => s));
   element.properties.values.forEach(
           (p) => _generateProperty(p, sb, getDartName));
   element.methods.forEach((m) => _generateMethod(m, sb, getDartName));
@@ -143,7 +142,8 @@ String generateDirectives(String name, Iterable<String> extendNames,
   for (var extendName in extendNames) {
     if (extendName == null || !extendName.contains('-')) {
       extraImports.add(
-          "import 'package:custom_element_apigen/src/common.dart' show DomProxyMixin;");
+          "import 'package:custom_element_apigen/src/common.dart' show "
+          "PolymerProxyMixin, DomProxyMixin;");
     } else {
       var extendsImport = config.extendsImport;
       if (extendsImport == null) {
@@ -177,10 +177,10 @@ String _generateHeader(
 
   var extendClassName;
   if (extendName == null) {
-    extendClassName = 'HtmlElement with DomProxyMixin';
+    extendClassName = 'HtmlElement with DomProxyMixin, PolymerProxyMixin';
   } else if (!extendName.contains('-')) {
-    extendClassName =
-    '${HTML_ELEMENT_NAMES[baseExtendName]} with DomProxyMixin';
+    extendClassName = '${HTML_ELEMENT_NAMES[baseExtendName]} with '
+        'DomProxyMixin, PolymerProxyMixin';
   } else {
     extendClassName = _toCamelCase(extendName);
   }
@@ -246,7 +246,3 @@ final _docToDartType = {
   'object': null, // keep as dynamic
   'any': null,    // keep as dynamic
 };
-
-final _standardProperties = [
-  new Property('\$', '', hasGetter: true),
-];
