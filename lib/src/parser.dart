@@ -15,12 +15,12 @@ import 'package:html5lib/dom.dart' as html;
 import 'package:html5lib/parser.dart' as html;
 import 'ast.dart';
 
-typedef void WarningFn(String a);
+typedef void WarningCallback(String a);
 
 class PolymerParser {
   final summary = new FileSummary();
   final text;
-  WarningFn _warn = (_) {};
+  WarningCallback _warn = (_) {};
   bool parsed = false;
   bool isHtml;
 
@@ -77,8 +77,8 @@ class PolymerParser {
 
   /// Extract information from documentation comments in [text].
   void _parseDocumentation() {
-    PolymerObject current = null;
-    var currentMember = null;
+    Class current;
+    var currentMember;
     var elements = summary.elementsMap;
     var mixins = summary.mixinsMap;
 
@@ -138,13 +138,15 @@ class PolymerParser {
                 current = elements[content] = new Element(content, null);
               }
             } else if (_isMixinName(content)) {
-              current = mixins[content];
+              // Clean the `Polymer.` from the mixin name.
+              var mixin = content.replaceFirst('Polymer.', '');
+              current = mixins[mixin];
               if (current == null) {
-                current = mixins[content] = new Mixin(content);
+                current = mixins[mixin] = new Mixin(mixin);
               }
             } else {
-              _warn('unrecognized pattern for polymer object, found '
-                  '$content but expected a Class or Element name.');
+              _warn('unrecognized pattern for @class/@element, found $content '
+                  'but expected a Class or Element name.');
               current = null;
               break;
             }
@@ -157,7 +159,9 @@ class PolymerParser {
               _warn('not in element, ignoring mixins: $content');
               break;
             }
-            (current as Element).mixins.add(content);
+            // Clean the `Polymer.` from the mixin name.
+            var mixin = content.replaceFirst('Polymer.', '');
+            (current as Element).mixins.add(mixin);
             break;
 
           case 'extends':
@@ -262,7 +266,7 @@ class PolymerParser {
 
   /// Extract custom javascript getters and setters from text.
   void _parseCustomProperties() {
-    PolymerObject current = null;
+    Class current;
     var elements = summary.elementsMap;
     var mixins = summary.mixinsMap;
     for (var m in _elementPragmasAndGettersRegex.allMatches(text)) {
@@ -332,4 +336,4 @@ final _commentChars = new RegExp(
     r'^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*\<\!-\-|^s*\-\-\>', multiLine: true);
 
 final _customElementName = new RegExp(r'^[a-z0-9-]+$');
-final _className = new RegExp(r'^[a-zA-Z0-9\.]+$');
+final _className = new RegExp(r'^Polymer\.[a-zA-Z0-9\.]+$');

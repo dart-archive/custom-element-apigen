@@ -175,19 +175,25 @@ void _generateDartApi(
   }
   var outputDir = path.joinAll(outputDirSegments);
 
-  var directives = generateDirectives(name, summary, config);
-  var classes = new StringBuffer();
-  classes.write(summary.elements.map(
-          (e) => generateClass(e, config, elementSummaries)).join('\n\n'));
-  classes.write(summary.mixins.map(
-          (m) => generateClass(m, config, mixinSummaries)).join('\n\n'));
-
   // Only create a dart file if we found at least one polymer element.
   var hasDartFile = summary.elements.isNotEmpty || summary.mixins.isNotEmpty;
   if (hasDartFile) {
+    var dartContent = new StringBuffer();
+    dartContent.write(generateDirectives(name, summary, config));
+    var first = true;
+    for (var element in summary.elements) {
+      if (!first) dartContent.write('\n\n');
+      dartContent.write(generateClass(element, config, elementSummaries));
+      first = false;
+    }
+    for (var mixin in summary.mixins) {
+      if (!first) dartContent.write('\n\n');
+      dartContent.write(generateClass(mixin, config, mixinSummaries));
+      first = false;
+    }
     new File(path.join(outputDir, '$name.dart'))
         ..createSync(recursive: true)
-        ..writeAsStringSync('$directives$classes');
+        ..writeAsStringSync(dartContent.toString());
   }
 
   var extraImports = new StringBuffer();

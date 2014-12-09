@@ -59,11 +59,11 @@ class Import extends Entry {
   }
 }
 
-class PolymerObject extends NamedEntry {
+class Class extends NamedEntry {
   final Map<String, Property> properties = {};
   final List<Method> methods = [];
 
-  PolymerObject(name) : super(name, '');
+  Class(name) : super(name, '');
 
   void _prettyPrint(StringBuffer sb) {
     sb.write('$name:\n');
@@ -88,7 +88,7 @@ class PolymerObject extends NamedEntry {
   }
 }
 
-class Mixin extends PolymerObject {
+class Mixin extends Class {
   Mixin(name) : super(name);
 
   _prettyPrint(StringBuffer sb) {
@@ -104,7 +104,7 @@ class Mixin extends PolymerObject {
 }
 
 /// Data about a custom-element.
-class Element extends PolymerObject {
+class Element extends Class {
   String extendName;
   final List<String> mixins = [];
 

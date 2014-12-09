@@ -14,27 +14,27 @@ import 'config.dart';
 import 'ast.dart';
 
 String generateClass(
-    PolymerObject polymerObject, FileConfig config,
-    Map<String, PolymerObject> allPolymerObjects) {
+    Class classSummary, FileConfig config,
+    Map<String, Class> allClassSummaries) {
   var sb = new StringBuffer();
-  var comment = _toComment(polymerObject.description);
-  String baseExtendName;
-  if (polymerObject is Element) {
+  var comment = _toComment(classSummary.description);
+  var baseExtendName;
+  if (classSummary is Element) {
     baseExtendName =
-        _baseExtendName(polymerObject.extendName, allPolymerObjects);
-    sb.write(_generateElementHeader(polymerObject.name, comment,
-        polymerObject.extendName, baseExtendName, polymerObject.mixins));
+        _baseExtendName(classSummary.extendName, allClassSummaries);
+    sb.write(_generateElementHeader(classSummary.name, comment,
+        classSummary.extendName, baseExtendName, classSummary.mixins));
   } else {
-    sb.write(_generateMixinHeader(polymerObject.name, comment));
+    sb.write(_generateMixinHeader(classSummary.name, comment));
   }
 
   var getDartName = _substituteFunction(config.nameSubstitutions);
-  polymerObject.properties.values.forEach(
+  classSummary.properties.values.forEach(
           (p) => _generateProperty(p, sb, getDartName));
-  polymerObject.methods.forEach((m) => _generateMethod(m, sb, getDartName));
+  classSummary.methods.forEach((m) => _generateMethod(m, sb, getDartName));
   sb.write('}\n');
-  if (polymerObject is Element) {
-    sb.write(_generateUpdateMethod(polymerObject.name, baseExtendName));
+  if (classSummary is Element) {
+    sb.write(_generateUpdateMethod(classSummary.name, baseExtendName));
   }
   return sb.toString();
 }
@@ -44,7 +44,7 @@ String _baseExtendName(String extendName, Map<String, Element> allElements) {
   var baseExtendName = extendName;
   var baseExtendElement = allElements[baseExtendName];
   while (baseExtendElement != null && baseExtendElement.extendName != null
-  && !baseExtendElement.extendName.isEmpty) {
+         && !baseExtendElement.extendName.isEmpty) {
     baseExtendName = baseExtendElement.extendName;
     baseExtendElement = allElements[baseExtendName];
   }
@@ -167,9 +167,8 @@ String generateDirectives(
     }
 
     for (var mixin in element.mixins) {
-      var className = mixin.replaceFirst('Polymer.', '');
-      var packageName = config.global.findPackageNameForElement(className);
-      var fileName = '${_toFileName(className)}.dart';
+      var packageName = config.global.findPackageNameForElement(mixin);
+      var fileName = '${_toFileName(mixin)}.dart';
       var mixinImport = packageName != null
           ? 'package:$packageName/$fileName' : fileName;
       extraImports.add("import '$mixinImport';");
@@ -227,11 +226,8 @@ String _generateElementHeader(String name, String comment, String extendName,
     extendClassName = _toCamelCase(extendName);
   }
 
-  var optionalMixinString = '';
-  if (mixins.isNotEmpty) {
-    optionalMixinString = '${hasDomProxyMixin ? ', ' : ' with '}'
-        '${mixins.map((m) => m.replaceFirst('Polymer.', '')).join(', ')}';
-  }
+  var optionalMixinString = mixins.isEmpty ? '' :
+      '${hasDomProxyMixin ? ', ' : ' with '}${mixins.join(', ')}';
 
   var factoryMethod = new StringBuffer('factory ${className}() => ');
   if (baseExtendName == null || baseExtendName.contains('-')) {
@@ -290,9 +286,7 @@ String _toFileName(String className) {
   var fileName = new StringBuffer();
   for (var i = 0; i < className.length; ++i) {
     var lower = className[i].toLowerCase();
-    if (i > 0 && className[i] != lower) {
-      fileName.write('_');
-    }
+    if (i > 0 && className[i] != lower) fileName.write('_');
     fileName.write(lower);
   }
   return fileName.toString();
