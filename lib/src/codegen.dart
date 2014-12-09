@@ -14,18 +14,28 @@ import 'config.dart';
 import 'ast.dart';
 
 String generateClass(
-    Element element, FileConfig config, Map<String, Element> allElements) {
+    PolymerObject polymerObject, FileConfig config,
+    Map<String, PolymerObject> allPolymerObjects) {
   var sb = new StringBuffer();
-  var comment = _toComment(element.description);
-  var baseExtendName = _baseExtendName(element.extendName, allElements);
-  sb.write(_generateHeader(
-      element.name, comment, element.extendName, baseExtendName));
+  var comment = _toComment(polymerObject.description);
+  String baseExtendName;
+  if (polymerObject is Element) {
+    baseExtendName =
+        _baseExtendName(polymerObject.extendName, allPolymerObjects);
+    sb.write(_generateElementHeader(polymerObject.name, comment,
+        polymerObject.extendName, baseExtendName, polymerObject.mixins));
+  } else {
+    sb.write(_generateMixinHeader(polymerObject.name, comment));
+  }
+
   var getDartName = _substituteFunction(config.nameSubstitutions);
-  element.properties.values.forEach(
+  polymerObject.properties.values.forEach(
           (p) => _generateProperty(p, sb, getDartName));
-  element.methods.forEach((m) => _generateMethod(m, sb, getDartName));
+  polymerObject.methods.forEach((m) => _generateMethod(m, sb, getDartName));
   sb.write('}\n');
-  sb.write(_generateUpdateMethod(element.name, baseExtendName));
+  if (polymerObject is Element) {
+    sb.write(_generateUpdateMethod(polymerObject.name, baseExtendName));
+  }
   return sb.toString();
 }
 
@@ -134,12 +144,13 @@ void _generateArgList(
   }
 }
 
-String generateDirectives(String name, Iterable<String> extendNames,
-    FileConfig config) {
+String generateDirectives(
+    String name, FileSummary summary, FileConfig config) {
   var libName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
 
-  for (var extendName in extendNames) {
+  for (var element in summary.elements) {
+    var extendName = element.extendName;
     if (extendName == null || !extendName.contains('-')) {
       extraImports.add(
           "import 'package:custom_element_apigen/src/common.dart' show "
@@ -154,10 +165,20 @@ String generateDirectives(String name, Iterable<String> extendNames,
       }
       extraImports.add("import '$extendsImport';");
     }
+
+    for (var mixin in element.mixins) {
+      var className = mixin.replaceFirst('Polymer.', '');
+      var packageName = config.global.findPackageNameForElement(className);
+      var fileName = '${_toFileName(className)}.dart';
+      var mixinImport = packageName != null
+          ? 'package:$packageName/$fileName' : fileName;
+      extraImports.add("import '$mixinImport';");
+    }
   }
 
   var packageName = config.global.currentPackage;
-  return '''
+  var output = new StringBuffer();
+  output.write('''
 // DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
 /// Dart API for the polymer element `$name`.
@@ -165,24 +186,51 @@ library $packageName.$libName;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;
+''');
+  if (summary.elements.isEmpty) {
+    output.write('''
+import 'package:custom_element_apigen/src/common.dart' show DomProxyMixin;
+''');
+  } else {
+    output.write('''
 import 'package:web_components/interop.dart' show registerDartType;
 import 'package:polymer/polymer.dart' show initMethod;
-${extraImports.join('\n')}
+''');
+  }
+  extraImports.forEach((import) => output.writeln(import));
+  return output.toString();
+}
+
+String _generateMixinHeader(String name, String comment) {
+  var className = name.split('.').last;
+  return '''
+
+$comment
+abstract class $className implements DomProxyMixin {
 ''';
 }
 
-String _generateHeader(
-    String name, String comment, String extendName, String baseExtendName) {
+String _generateElementHeader(String name, String comment, String extendName,
+    String baseExtendName, List<String> mixins) {
   var className = _toCamelCase(name);
 
   var extendClassName;
+  var hasDomProxyMixin = false;
   if (extendName == null) {
     extendClassName = 'HtmlElement with DomProxyMixin, PolymerProxyMixin';
+    hasDomProxyMixin = true;
   } else if (!extendName.contains('-')) {
     extendClassName = '${HTML_ELEMENT_NAMES[baseExtendName]} with '
         'DomProxyMixin, PolymerProxyMixin';
+    hasDomProxyMixin = true;
   } else {
     extendClassName = _toCamelCase(extendName);
+  }
+
+  var optionalMixinString = '';
+  if (mixins.isNotEmpty) {
+    optionalMixinString = '${hasDomProxyMixin ? ', ' : ' with '}'
+        '${mixins.map((m) => m.replaceFirst('Polymer.', '')).join(', ')}';
   }
 
   var factoryMethod = new StringBuffer('factory ${className}() => ');
@@ -195,7 +243,7 @@ String _generateHeader(
   return '''
 
 $comment
-class $className extends $extendClassName {
+class $className extends $extendClassName$optionalMixinString {
   ${className}.created() : super.created();
   $factoryMethod
 ''';
@@ -237,6 +285,18 @@ String _toComment(String description, [int indent = 0]) {
 
 String _toCamelCase(String dashName) => dashName.split('-')
     .map((e) => '${e[0].toUpperCase()}${e.substring(1)}').join('');
+
+String _toFileName(String className) {
+  var fileName = new StringBuffer();
+  for (var i = 0; i < className.length; ++i) {
+    var lower = className[i].toLowerCase();
+    if (i > 0 && className[i] != lower) {
+      fileName.write('_');
+    }
+    fileName.write(lower);
+  }
+  return fileName.toString();
+}
 
 final _docToDartType = {
   'boolean': 'bool',
