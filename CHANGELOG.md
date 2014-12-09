@@ -1,5 +1,6 @@
 ## 0.1.3
   * Add support for various methods and properties from the Polymer base class.
+  * Add support for mixins.
 
 ## 0.1.2+1
   * Increase upper bound on web_components to `<0.11.0`.
