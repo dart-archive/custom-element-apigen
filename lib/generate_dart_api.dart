@@ -112,7 +112,8 @@ void _generateImportStub(String inputPath, String packageName) {
   file.createSync(recursive: true);
 
   var segments = path.split(inputPath);
-  var newFileName = segments.last.replaceAll('-', '_');
+  var newFileName = segments.last.replaceAll('-', '_')
+      .replaceAll('.html', '_nodart.html');
   var depth = segments.length;
   var goingUp = '../' * depth;
   var newPath = path.join(goingUp, 'packages/$packageName', newFileName);
@@ -173,63 +174,56 @@ void _generateDartApi(
     outputDirSegments.addAll(segments.getRange(2, segments.length - 1)
         .map((s) => s.replaceAll('-', '_')));
   }
+  var packageLibDir = (isSubdir) ? '../' * (segments.length - 3) : '';
   var outputDir = path.joinAll(outputDirSegments);
 
-  // Only create a dart file if we found at least one polymer element.
-  var hasDartFile = summary.elements.isNotEmpty || summary.mixins.isNotEmpty;
-  if (hasDartFile) {
-    var dartContent = new StringBuffer();
-    dartContent.write(generateDirectives(name, summary, config));
-    var first = true;
-    for (var element in summary.elements) {
-      if (!first) dartContent.write('\n\n');
-      dartContent.write(generateClass(element, config, elementSummaries));
-      first = false;
-    }
-    for (var mixin in summary.mixins) {
-      if (!first) dartContent.write('\n\n');
-      dartContent.write(generateClass(mixin, config, mixinSummaries));
-      first = false;
-    }
-    new File(path.join(outputDir, '$name.dart'))
-        ..createSync(recursive: true)
-        ..writeAsStringSync(dartContent.toString());
+  // Create the dart file.
+  var dartContent = new StringBuffer();
+  dartContent.write(
+      generateDirectives(name, segments, summary, config, packageLibDir));
+  var first = true;
+  for (var element in summary.elements) {
+    if (!first) dartContent.write('\n\n');
+    dartContent.write(generateClass(element, config, elementSummaries));
+    first = false;
   }
+  for (var mixin in summary.mixins) {
+    if (!first) dartContent.write('\n\n');
+    dartContent.write(generateClass(mixin, config, mixinSummaries));
+    first = false;
+  }
+  new File(path.join(outputDir, '$name.dart'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync(dartContent.toString());
 
+  // Create the main html file, this contains an import to the *_nodart.html
+  // file, as well as other imports and a script pointing to the dart file.
   var extraImports = new StringBuffer();
-  var packageLibDir = (isSubdir) ? '../' * (segments.length - 3) : '';
   for (var jsImport in summary.imports) {
-    var importPath = jsImport.importPath;
-    if (importPath.contains('polymer.html')) continue;
-    var omit = config.omitImports;
-    if (omit != null && omit.any((path) => importPath.contains(path))) {
-      continue;
-    }
-    var importSegments = path.split(importPath);
-    if (importSegments[0] == '..') {
-      importSegments.removeRange(0, segments.length - 2);
-    }
-    var dartImport = path.joinAll(importSegments).replaceAll('-', '_');
-    var targetElement = importSegments.last;
-    var packageName = config.global.findPackageNameForElement(targetElement);
-    if (packageName != null) {
-      dartImport = path.join(
-          '..', '..', packageLibDir, 'packages', packageName, dartImport);
-    } else {
-      dartImport = path.join(packageLibDir, dartImport);
-    }
-    extraImports.write('<link rel="import" href="$dartImport">\n');
+    var import = getImportPath(jsImport, config, segments, packageLibDir);
+    if (import == null) continue;
+    extraImports.write('<link rel="import" href="$import">\n');
   }
 
-  var htmlBody =
-      '<link rel="import" href="${packageLibDir}src/$dashName">\n$extraImports';
-  var scriptTag = '';
-  if (hasDartFile) {
-    scriptTag = '<script type="application/dart" src="$name.dart"></script>\n';
-  }
+  var mainHtml = '''
+<link rel="import" href="${name}_nodart.html">
+$extraImports
+<script type="application/dart" src="$name.dart"></script>\n
+''';
   new File(path.join(outputDir, '$name.html'))
       ..createSync(recursive: true)
-      ..writeAsStringSync('$htmlBody$scriptTag');
+      ..writeAsStringSync(mainHtml);
+
+  // Create the *_nodart.html file. This contains all the other html imports.
+  var noDartExtraImports =
+      extraImports.toString().replaceAll('.html', '_nodart.html');
+  var htmlBody = '''
+<link rel="import" href="${packageLibDir}src/$dashName">
+$noDartExtraImports
+''';
+  new File(path.join(outputDir, '${name}_nodart.html'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('$htmlBody');
 }
 
 void _deleteFilesMatchingPatterns(List<RegExp> patterns) {

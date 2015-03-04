@@ -8,6 +8,7 @@
 /// Methods to generate code from previously collected information.
 library custom_element_apigen.src.codegen;
 
+import 'package:path/path.dart' as path;
 import 'package:polymer/html_element_names.dart';
 
 import 'config.dart';
@@ -33,9 +34,6 @@ String generateClass(
           (p) => _generateProperty(p, sb, getDartName));
   classSummary.methods.forEach((m) => _generateMethod(m, sb, getDartName));
   sb.write('}\n');
-  if (classSummary is Element) {
-    sb.write(_generateUpdateMethod(classSummary.name, baseExtendName));
-  }
   return sb.toString();
 }
 
@@ -145,7 +143,8 @@ void _generateArgList(
 }
 
 String generateDirectives(
-    String name, FileSummary summary, FileConfig config) {
+    String name, List<String> segments, FileSummary summary,
+    FileConfig config, String packageLibDir) {
   var libName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
 
@@ -175,29 +174,65 @@ String generateDirectives(
     }
   }
 
+  for (var import in summary.imports) {
+    var htmlImport = getImportPath(
+        import, config, segments, packageLibDir, isDartFile: true);
+    if (htmlImport == null) continue;
+    var dartImport = '${path.withoutExtension(htmlImport)}.dart';
+    extraImports.add("import '$dartImport';");
+  }
+
   var packageName = config.global.currentPackage;
   var output = new StringBuffer();
   output.write('''
 // DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
 /// Dart API for the polymer element `$name`.
+@HtmlImport('package:$packageName/${libName}_nodart.html')
 library $packageName.$libName;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;
+import 'package:web_components/custom_element_proxy.dart';
+import 'package:web_components/html_import_annotation.dart';
 ''');
   if (summary.elements.isEmpty) {
     output.write('''
 import 'package:custom_element_apigen/src/common.dart' show DomProxyMixin;
 ''');
-  } else {
-    output.write('''
-import 'package:web_components/interop.dart' show registerDartType;
-import 'package:polymer/polymer.dart' show initMethod;
-''');
   }
   extraImports.forEach((import) => output.writeln(import));
   return output.toString();
+}
+
+String getImportPath(
+    Import import, FileConfig config, List<String> segments,
+    String packageLibDir, {bool isDartFile: false}) {
+  var importPath = import.importPath;
+  if (importPath.contains('polymer.html')) return null;
+  var omit = config.omitImports;
+  if (omit != null && omit.any((path) => importPath.contains(path))) {
+    return null;
+  }
+  var importSegments = path.split(importPath);
+  if (importSegments[0] == '..') {
+    importSegments.removeRange(0, segments.length - 2);
+  }
+  var dartImport = path.joinAll(importSegments).replaceAll('-', '_');
+  var targetElement = importSegments.last;
+  var packageName = config.global.findPackageNameForElement(targetElement);
+  if (packageName != null) {
+    if (isDartFile) {
+      dartImport = 'package:$packageName/$dartImport';
+    } else {
+      dartImport = path.join(
+        '..', '..', packageLibDir, 'packages', packageName, dartImport);
+    }
+
+  } else {
+    dartImport = path.join(packageLibDir, dartImport);
+  }
+  return dartImport;
 }
 
 String _generateMixinHeader(String name, String comment) {
@@ -236,26 +271,25 @@ String _generateElementHeader(String name, String comment, String extendName,
     factoryMethod.write('new Element.tag(\'$baseExtendName\', \'$name\');');
   }
 
+  var customElementProxy = _generateCustomElementProxy(name, baseExtendName);
   return '''
 
 $comment
+$customElementProxy
 class $className extends $extendClassName$optionalMixinString {
   ${className}.created() : super.created();
   $factoryMethod
 ''';
 }
 
-String _generateUpdateMethod(String name, String baseExtendName) {
+String _generateCustomElementProxy(String name, String baseExtendName) {
   var className = _toCamelCase(name);
   // Only pass the extendsTag if its a native element.
   var maybeExtendsTag = '';
   if (baseExtendName != null && !baseExtendName.contains('-')) {
     maybeExtendsTag = ', extendsTag: \'$baseExtendName\'';
   }
-  return '''
-@initMethod
-upgrade$className() => registerDartType('$name', ${className}$maybeExtendsTag);
-''';
+  return "@CustomElementProxy('$name'$maybeExtendsTag)";
 }
 
 void _generateArgComment(Argument arg, StringBuffer sb) {

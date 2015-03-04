@@ -1,3 +1,8 @@
+## 0.1.4-dev
+  * Start using @HtmlImport and @CustomElementProxy. This should have no effect
+    on existing applications, other than enabling them to remove some of their
+    html imports if desired (a dart import alone is now sufficient).
+
 ## 0.1.3
   * Add support for various methods and properties from the Polymer base class.
   * Add support for mixins.
