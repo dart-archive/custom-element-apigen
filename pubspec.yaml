@@ -15,11 +15,7 @@ dependencies:
 dependency_overrides:
   polymer:
     git:
-      url: git@github.com:dart-lang/polymer-dart.git
+      url: https://github.com/dart-lang/polymer-dart.git
       ref: smoke-generator
-  web_components:
-    git:
-      url: git@github.com:dart-lang/web-components.git
-      ref: crawler
 environment:
   sdk: '>=1.6.0 <2.0.0'
