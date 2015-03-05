@@ -188,7 +188,7 @@ String generateDirectives(
 // DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
 /// Dart API for the polymer element `$name`.
-@HtmlImport('package:$packageName/${libName}_nodart.html')
+@HtmlImport('${libName}_nodart.html')
 library $packageName.$libName;
 
 import 'dart:html';
