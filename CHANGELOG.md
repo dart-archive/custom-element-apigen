@@ -1,3 +1,6 @@
+## 0.1.4+1
+  * Update `web_components` constraint.
+
 ## 0.1.4
   * Start using @HtmlImport and @CustomElementProxy. This should have no effect
     on existing applications, other than enabling them to remove some of their
