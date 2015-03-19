@@ -1,3 +1,6 @@
+## 0.1.4+2
+  * Switch from `html5lib` to `html` package dependency.
+
 ## 0.1.4+1
   * Update `web_components` constraint.
 

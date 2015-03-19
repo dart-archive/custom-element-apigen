@@ -11,8 +11,8 @@
 // make this script just parse a .json file instead.
 library custom_element_apigen.src.parser;
 
-import 'package:html5lib/dom.dart' as html;
-import 'package:html5lib/parser.dart' as html;
+import 'package:html/dom.dart' as html;
+import 'package:html/parser.dart' as html;
 import 'ast.dart';
 
 typedef void WarningCallback(String a);
