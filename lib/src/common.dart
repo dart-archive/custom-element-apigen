@@ -7,6 +7,7 @@
 
 /// Common logic used by the code generated with `tool/generate_dart_api.dart`.
 library custom_element_apigen.src.common;
+
 import 'dart:html' show Element, DocumentFragment;
 import 'dart:js' as js;
 
