@@ -161,6 +161,11 @@ class PolymerParser {
             }
             // Clean the `Polymer.` from the mixin name.
             var mixin = content.replaceFirst('Polymer.', '');
+            var firstSpace = mixin.indexOf(' ');
+            // Avoid pulling in any extra comments after the mixin.
+            if (firstSpace != -1) {
+              mixin = mixin.substring(0, firstSpace);
+            }
             (current as Element).mixins.add(mixin);
             break;
 

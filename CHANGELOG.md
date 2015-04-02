@@ -1,3 +1,8 @@
+## 0.1.4+3
+  * Make the parser a bit more lenient around parsing mixins. The name is only
+    parsed up to the first space, which allows for comments or other things
+    to follow the name.
+
 ## 0.1.4+2
   * Switch from `html5lib` to `html` package dependency.
 
