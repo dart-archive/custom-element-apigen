@@ -1,3 +1,6 @@
+## 0.1.5+1
+  * Add `Element` as dart type for `Element` js type.
+
 ## 0.1.5
   * Support `file_overrides` option for each html file listed in config files.
     This should be a map of file name prefixes to a list of class names. All

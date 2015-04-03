@@ -359,4 +359,5 @@ final _docToDartType = {
   'number': 'num',
   'object': null, // keep as dynamic
   'any': null, // keep as dynamic
+  'element': 'Element',
 };
