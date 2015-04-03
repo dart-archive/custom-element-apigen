@@ -1,3 +1,9 @@
+## 0.1.5
+  * Support `file_overrides` option for each html file listed in config files.
+    This should be a map of file name prefixes to a list of class names. All
+    classes listed will be output to the corresponding file instead of the
+    default one.
+
 ## 0.1.4+3
   * Make the parser a bit more lenient around parsing mixins. The name is only
     parsed up to the first space, which allows for comments or other things

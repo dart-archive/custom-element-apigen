@@ -87,7 +87,8 @@ class PolymerParser {
     for (var m in _docCommentRegex.allMatches(text)) {
       // unify line ends, remove all comment characters, split into individual
       // lines
-      var lines = m.group(0)
+      var lines = m
+          .group(0)
           .replaceAll(_lineEnds, '\n')
           .replaceAll(_commentChars, '')
           .trim()
@@ -142,7 +143,7 @@ class PolymerParser {
               var mixin = content.replaceFirst('Polymer.', '');
               current = mixins[mixin];
               if (current == null) {
-                current = mixins[mixin] = new Mixin(mixin);
+                current = mixins[mixin] = new Mixin(mixin, null);
               }
             } else {
               _warn('unrecognized pattern for @class/@element, found $content '
@@ -160,12 +161,7 @@ class PolymerParser {
               break;
             }
             // Clean the `Polymer.` from the mixin name.
-            var mixin = content.replaceFirst('Polymer.', '');
-            var firstSpace = mixin.indexOf(' ');
-            // Avoid pulling in any extra comments after the mixin.
-            if (firstSpace != -1) {
-              mixin = mixin.substring(0, firstSpace);
-            }
+            var mixin = _mixinName(content);
             (current as Element).mixins.add(mixin);
             break;
 
@@ -174,14 +170,15 @@ class PolymerParser {
               _warn('not in element, ignoring extends: $content');
               break;
             }
-            if (current is! Element) {
-              _warn('@extends annotation not supported for mixins.');
+            if (current is! Class) {
+              _warn('@extends is only supported for Elements and Mixins.');
               break;
             }
-            var element = current as Element;
-            if (element.extendName != content) {
+            if (current is Element && current.extendName != content) {
               _warn('Found conflicting values for `extends`. Expected '
-                  '`${element.extendName}` but found `${content}');
+                  '`${current.extendName}` but found `${content}');
+            } else if (current is Mixin) {
+              current.extendName = _mixinName(content);
             }
             break;
 
@@ -216,8 +213,7 @@ class PolymerParser {
               break;
             }
             if (currentMember is! Method) {
-              _warn(
-                  'not in method ($currentMember), ignoring param: $content');
+              _warn('not in method ($currentMember), ignoring param: $content');
               break;
             }
             var desc = '${param.group(3)}\n$description';
@@ -237,7 +233,8 @@ class PolymerParser {
               break;
             }
             if (currentMember is! Method) {
-              _warn('not in method ($currentMember), ignoring return: $content');
+              _warn(
+                  'not in method ($currentMember), ignoring return: $content');
               break;
             }
             currentMember.isVoid = false;
@@ -311,6 +308,16 @@ class PolymerParser {
       if (isSetter) property.hasSetter = true;
     }
   }
+}
+
+String _mixinName(String name) {
+  name = name.replaceFirst('Polymer.', '');
+  var firstSpace = name.indexOf(' ');
+  // Avoid pulling in any extra comments after the mixin.
+  if (firstSpace != -1) {
+    name = name.substring(0, firstSpace);
+  }
+  return name;
 }
 
 bool _isElementName(String name) => _customElementName.hasMatch(name);

@@ -14,7 +14,7 @@ import 'package:yaml/yaml.dart';
 /// Holds the entire information parsed from the command line arguments and
 /// configuration files.
 class GlobalConfig {
-  final Map<String, FileConfig> files = {};
+  final List<FileConfig> files = [];
   final Map<String, String> stubs = {};
   final List<PackageMapping> packageMappings = [];
   final List<RegExp> deletionPatterns = [];
@@ -48,6 +48,9 @@ class PackageMapping implements Comparable<PackageMapping> {
 class FileConfig {
   final GlobalConfig global;
 
+  /// The path to the original file.
+  final String inputPath;
+
   /// Javascript names that should be substituted when generating Dart code.
   final Map<String, String> nameSubstitutions;
 
@@ -55,15 +58,20 @@ class FileConfig {
   /// corresponding Dart type.
   final List<String> omitImports;
 
+  /// Map of file names to classes that should live within them. All other
+  /// classes will end up in the default file.
+  final Map<String, List<String>> file_overrides;
+
   /// Dart import to get the base class of a custom element. This is inferred
   /// normally from the package_mappings, but can be overriden on an individual
   /// file if necessary.
   final String extendsImport;
 
-  FileConfig(this.global, [Map map])
-    : nameSubstitutions = map != null ? map['name_substitutions'] : null,
-      omitImports = map != null ? map['omit_imports'] : null,
-      extendsImport = map != null ? map['extends_import'] : null;
+  FileConfig(this.global, this.inputPath, [Map map])
+      : nameSubstitutions = map != null ? map['name_substitutions'] : null,
+        omitImports = map != null ? map['omit_imports'] : null,
+        extendsImport = map != null ? map['extends_import'] : null,
+        file_overrides = map != null ? map['file_overrides'] : null;
 }
 
 /// Parse configurations from a `.yaml` configuration file.
@@ -91,8 +99,8 @@ void _parsePackageMappings(yaml, GlobalConfig config) {
   if (packageMappings == null) return;
   for (var entry in packageMappings) {
     if (entry is! YamlMap) continue;
-    config.packageMappings.add(
-        new PackageMapping(entry.keys.single, entry.values.single));
+    config.packageMappings
+        .add(new PackageMapping(entry.keys.single, entry.values.single));
   }
 }
 
@@ -101,7 +109,7 @@ void _parseFilesToGenerate(yaml, GlobalConfig config) {
   if (toGenerate == null) return;
   for (var entry in toGenerate) {
     if (entry is String) {
-      config.files['lib/src/$entry'] = new FileConfig(config);
+      config.files.add(new FileConfig(config, 'lib/src/$entry'));
       continue;
     }
 
@@ -111,8 +119,8 @@ void _parseFilesToGenerate(yaml, GlobalConfig config) {
       continue;
     }
 
-    config.files['lib/src/${entry.keys.single}'] =
-        new FileConfig(config, entry.values.single);
+    config.files.add(new FileConfig(
+        config, 'lib/src/${entry.keys.single}', entry.values.single));
   }
 }
 
@@ -146,6 +154,6 @@ void _parseDeletionPatterns(yaml, GlobalConfig config) {
     print('Unrecognized deletion_patterns setting, expected a list of Strings');
     exit(1);
   }
-  config.deletionPatterns.addAll(
-      (patterns as YamlList).map((pattern) => new RegExp(pattern)));
+  config.deletionPatterns
+      .addAll((patterns as YamlList).map((pattern) => new RegExp(pattern)));
 }

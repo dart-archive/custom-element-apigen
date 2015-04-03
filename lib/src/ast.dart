@@ -22,6 +22,53 @@ class FileSummary {
 
   String toString() =>
       'imports: $imports, elements: $elements, mixins: $mixins';
+
+  /// Splits this summary into multiple summaries based on [file_overrides]. The
+  /// keys are file names and the values are classes that should live in that
+  /// file. All remaining files will end up in the [null] key.
+  Map<String, FileSummary> splitByFile(
+      Map<String, List<String>> file_overrides) {
+    if (file_overrides == null) return {null: this};
+
+    var summaries = {};
+    var remainingElements = new Map.from(elementsMap);
+    var remainingMixins = new Map.from(mixinsMap);
+
+    /// Removes [names] keys from [original] and returns a new [Map] with those
+    /// removed values.
+    Map<String, Class> removeFromMap(
+        Map<String, Class> original, List<String> names) {
+      var newMap = {};
+      for (var name in names) {
+        var val = original.remove(name);
+        if (val != null) newMap[name] = val;
+      }
+      return newMap;
+    }
+
+    /// Builds a summary from this one given [classNames].
+    FileSummary buildSummary(List<String> classNames) {
+      var summary = new FileSummary();
+      summary.imports = new List.from(imports);
+      summary.elementsMap = removeFromMap(remainingElements, classNames);
+      summary.mixinsMap = removeFromMap(remainingMixins, classNames);
+
+      return summary;
+    }
+
+    file_overrides.forEach((String path, List<String> classNames) {
+      summaries[path] = buildSummary(classNames);
+    });
+
+    var defaultSummary = new FileSummary();
+    defaultSummary.imports = new List.from(imports);
+    defaultSummary.elementsMap = remainingElements;
+    defaultSummary.mixinsMap = remainingMixins;
+
+    summaries[null] = defaultSummary;
+
+    return summaries;
+  }
 }
 
 /// Base class for any entry we parse out of the HTML files.
@@ -60,10 +107,11 @@ class Import extends Entry {
 }
 
 class Class extends NamedEntry {
+  String extendName;
   final Map<String, Property> properties = {};
   final List<Method> methods = [];
 
-  Class(name) : super(name, '');
+  Class(name, this.extendName) : super(name, '');
 
   void _prettyPrint(StringBuffer sb) {
     sb.write('$name:\n');
@@ -79,6 +127,7 @@ class Class extends NamedEntry {
       m._prettyPrint(sb);
       sb.write('\n');
     }
+    sb.writeln('extends: $extendName');
   }
 
   String toString() {
@@ -89,7 +138,7 @@ class Class extends NamedEntry {
 }
 
 class Mixin extends Class {
-  Mixin(name) : super(name);
+  Mixin(String name, String extendName) : super(name, extendName);
 
   _prettyPrint(StringBuffer sb) {
     sb.writeln('**Mixin**');
@@ -105,10 +154,9 @@ class Mixin extends Class {
 
 /// Data about a custom-element.
 class Element extends Class {
-  String extendName;
   final List<String> mixins = [];
 
-  Element(name, this.extendName) : super(name);
+  Element(String name, String extendName) : super(name, extendName);
 
   void _prettyPrint(StringBuffer sb) {
     sb.writeln('**Element**');
@@ -169,20 +217,23 @@ class Method extends TypedEntry {
       first = false;
       firstOptional = false;
       arg._prettyPrint(sb);
-    };
+    }
     if (!firstOptional) sb.write(']');
 
     sb.write(');');
   }
 }
 
-
 /// Collects name and type information for arguments.
 class Argument extends TypedEntry {
   Argument(name, desc, type) : super(name, desc, type);
 
   void _prettyPrint(StringBuffer sb) {
-    if (type != null) sb..write(type)..write(' ');
+    if (type != null) {
+      sb
+        ..write(type)
+        ..write(' ');
+    }
     sb.write(name);
   }
 }
