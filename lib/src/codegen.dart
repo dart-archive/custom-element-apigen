@@ -175,6 +175,11 @@ String generateDirectives(String name, List<String> segments,
 
       // Add imports for things each mixin `extends`.
       var mixin = mixinSummaries[mixinName];
+      if (mixin == null) {
+        throw 'Unable to find mixin $mixinName. Make sure the mixin file is '
+            'loaded. If you don\'t want to generate the mixin as a dart api '
+            'then you can use the `files_to_load` section to load it.';
+      }
       if (mixin.extendName == null) continue;
       extraImports.add(_generateMixinImport(mixin.extendName, config));
     }

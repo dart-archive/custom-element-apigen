@@ -41,16 +41,17 @@ GlobalConfig parseArgs(args, String program) {
 }
 
 void generateWrappers(GlobalConfig config) {
-  _progress('Parsing files... ');
   var fileSummaries = [];
   var elementSummaries = {};
   var mixinSummaries = {};
   var len = config.files.length;
   int i = 0;
-  config.files.forEach((fileConfig) {
-    var inputPath = fileConfig.inputPath;
-    _progress('${++i} of $len: $inputPath');
-    var summary = _parseFile(inputPath);
+
+  // Parses a file at [path] into a [FileSummary] and adds everything found into
+  // [fileSummaries], [elementSummaries], and [mixinSummaries].
+  void parseFile(String path, int totalLength) {
+    _progress('${++i} of $totalLength: $path');
+    var summary = _parseFile(path);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
       var name = elementSummary.name;
@@ -68,7 +69,14 @@ void generateWrappers(GlobalConfig config) {
       }
       mixinSummaries[name] = mixinSummary;
     }
+  }
+
+  _progress('Parsing files... ');
+  var parsedFilesLength = config.files.length + config.filesToLoad.length;
+  config.files.forEach((fileConfig) {
+    parseFile(fileConfig.inputPath, parsedFilesLength);
   });
+  config.filesToLoad.forEach((path) => parseFile(path, parsedFilesLength));
 
   _progress('Running codegen... ');
   len = config.files.length;
@@ -241,10 +249,11 @@ $noDartExtraImports
 }
 
 void _deleteFilesMatchingPatterns(List<RegExp> patterns) {
-  new Directory('lib/src')
+  new Directory(path.join('lib', 'src'))
       .listSync(recursive: true, followLinks: false)
       .where((file) => patterns.any((pattern) =>
-          path.relative(file.path, from: 'lib/src').contains(pattern)))
+          path.relative(file.path, from: path.join('lib', 'src'))
+              .contains(pattern)))
       .forEach((file) {
     if (file.existsSync()) file.deleteSync(recursive: true);
   });

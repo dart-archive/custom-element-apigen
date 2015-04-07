@@ -1,3 +1,8 @@
+## 0.1.6
+  * Added `files_to_load` option to config files. Any files listed will be
+    loaded but not generated. Any mixins which come from another package and are
+    stubbed out will need to be loaded this way.
+
 ## 0.1.5+1
   * Add `Element` as dart type for `Element` js type.
 
