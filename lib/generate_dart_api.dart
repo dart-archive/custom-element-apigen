@@ -251,9 +251,9 @@ $noDartExtraImports
 void _deleteFilesMatchingPatterns(List<RegExp> patterns) {
   new Directory(path.join('lib', 'src'))
       .listSync(recursive: true, followLinks: false)
-      .where((file) => patterns.any((pattern) =>
-          path.relative(file.path, from: path.join('lib', 'src'))
-              .contains(pattern)))
+      .where((file) => patterns.any((pattern) => path
+          .relative(file.path, from: path.join('lib', 'src'))
+          .contains(pattern)))
       .forEach((file) {
     if (file.existsSync()) file.deleteSync(recursive: true);
   });

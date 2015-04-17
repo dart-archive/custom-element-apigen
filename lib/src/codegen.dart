@@ -155,11 +155,7 @@ String generateDirectives(String name, List<String> segments,
 
   for (var element in summary.elements) {
     var extendName = element.extendName;
-    if (extendName == null || !extendName.contains('-')) {
-      extraImports.add(
-          "import 'package:custom_element_apigen/src/common.dart' show "
-          "PolymerProxyMixin, DomProxyMixin;");
-    } else {
+    if (extendName != null && extendName.contains('-')) {
       var extendsImport = config.extendsImport;
       if (extendsImport == null) {
         var packageName = config.global.findPackageNameForElement(extendName);
@@ -210,14 +206,9 @@ library $packageName.$libName;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;
-import 'package:web_components/custom_element_proxy.dart';
-import 'package:web_components/html_import_annotation.dart';
+import 'package:web_components/web_components.dart';
+import 'package:polymer_interop/polymer_interop.dart';
 ''');
-  if (summary.elements.isEmpty) {
-    output.write('''
-import 'package:custom_element_apigen/src/common.dart' show DomProxyMixin;
-''');
-  }
   extraImports.forEach((import) => output.writeln(import));
   return output.toString();
 }
@@ -264,7 +255,7 @@ String _generateMixinHeader(String name, String extendName, String comment) {
   return '''
 
 $comment
-abstract class $className implements DomProxyMixin$maybeExtends {
+abstract class $className implements CustomElementProxyMixin$maybeExtends {
 ''';
 }
 
@@ -273,14 +264,15 @@ String _generateElementHeader(String name, String comment, String extendName,
   var className = _toCamelCase(name);
 
   var extendClassName;
-  var hasDomProxyMixin = false;
+  var hasCustomElementProxyMixin = false;
   if (extendName == null) {
-    extendClassName = 'HtmlElement with DomProxyMixin, PolymerProxyMixin';
-    hasDomProxyMixin = true;
+    extendClassName =
+        'HtmlElement with CustomElementProxyMixin, PolymerProxyMixin';
+    hasCustomElementProxyMixin = true;
   } else if (!extendName.contains('-')) {
     extendClassName = '${HTML_ELEMENT_NAMES[baseExtendName]} with '
-        'DomProxyMixin, PolymerProxyMixin';
-    hasDomProxyMixin = true;
+        'CustomElementProxyMixin, PolymerProxyMixin';
+    hasCustomElementProxyMixin = true;
   } else {
     extendClassName = _toCamelCase(extendName);
   }
@@ -293,7 +285,9 @@ String _generateElementHeader(String name, String comment, String extendName,
 
   var optionalMixinString = mixinNames.isEmpty
       ? ''
-      : '${hasDomProxyMixin ? ', ' : ' with '}${mixinNames.join(', ')}';
+      : '${hasCustomElementProxyMixin
+          ? ', '
+          : ' with '}${mixinNames.join(', ')}';
 
   var factoryMethod = new StringBuffer('factory ${className}() => ');
   if (baseExtendName == null || baseExtendName.contains('-')) {

@@ -1,9 +1,16 @@
+## 0.1.7
+  * Use `CustomElementProxyMixin` from `web_components` instead of
+    `DomProxyMixin`.
+  * Moved `PolymerProxyMixin` to the `polymer_interop` package.
+  * Point to `polymer.html` from the `polymer_interop` package instead of the
+    `polymer` package.
+
 ## 0.1.6
   * Added `files_to_load` option to config files. Any files listed will be
     loaded but not generated. Any mixins which come from another package and are
     stubbed out will need to be loaded this way.
 
-## 0.1.5+1
+## 0.1.5
   * Add `Element` as dart type for `Element` js type.
 
 ## 0.1.5

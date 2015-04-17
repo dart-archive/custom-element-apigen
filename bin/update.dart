@@ -43,6 +43,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../../../../packages/web_components/interop_support.html">
 <!-- Dart note: load polymer for Dart and JS from the same place -->
-<link rel="import" href="../../../../packages/polymer/polymer.html">
+<link rel="import" href="../../../../packages/polymer_interop/polymer.html">
 ${generator.EMPTY_SCRIPT_WORKAROUND_ISSUE_11}
 ''';

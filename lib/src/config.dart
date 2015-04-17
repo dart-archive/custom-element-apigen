@@ -122,9 +122,8 @@ void _parseFilesToGenerate(yaml, GlobalConfig config) {
       continue;
     }
 
-    config.files.add(new FileConfig(
-        config, path.join('lib', 'src', entry.keys.single),
-        entry.values.single));
+    config.files.add(new FileConfig(config,
+        path.join('lib', 'src', entry.keys.single), entry.values.single));
   }
 }
 
@@ -179,8 +178,7 @@ String platformIndependentPath(String originalPath) =>
 List<String> _parseStringList(yaml, String name) {
   var items = yaml[name];
   if (items == null) return null;
-  if (items is! YamlList ||
-      (items as YamlList).any((e) => e is! String)) {
+  if (items is! YamlList || (items as YamlList).any((e) => e is! String)) {
     print('Unrecognized $name setting, expected a list of Strings');
     exit(1);
   }
