@@ -1,3 +1,7 @@
+## 0.1.7+1
+  * Add back `common.dart` since old generated elements import it.
+    This will be deleted in the next breaking release.
+
 ## 0.1.7
   * Use `CustomElementProxyMixin` from `web_components` instead of
     `DomProxyMixin`.
