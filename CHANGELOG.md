@@ -1,3 +1,7 @@
+## 0.2.0
+  * Update to polymer js 1.0 versions of polymer_interop and web_components
+    packages. Not compatible with 0.5 elements, they should remain on 0.1.7.
+
 ## 0.1.7
   * Use `CustomElementProxyMixin` from `web_components` instead of
     `DomProxyMixin`.
