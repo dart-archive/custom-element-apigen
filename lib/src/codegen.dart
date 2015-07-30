@@ -319,6 +319,7 @@ String _generateCustomElementProxy(String name, String baseExtendName) {
 
 void _generateArgComment(Argument arg, StringBuffer sb) {
   var name = arg.name;
+  if (arg.description == null) return;
   var description = arg.description.trim();
   if (description == '') return;
   var comment = description.replaceAll('\n', '\n  ///     ');
@@ -326,6 +327,7 @@ void _generateArgComment(Argument arg, StringBuffer sb) {
 }
 
 String _toComment(String description, [int indent = 0]) {
+  if (description == null) return '';
   description = description.trim();
   if (description == '') return '';
   var s1 = ' ' * indent;

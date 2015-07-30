@@ -17,6 +17,17 @@ class FileSummary {
 
   FileSummary();
 
+  FileSummary.fromJson(Map jsonSummary) {
+    imports = jsonSummary['imports'].map((path) => new Import(path))
+        .toList();
+
+    for (Map element in jsonSummary['elements']) {
+      elementsMap[element['name']] = new Element.fromJson(element);
+    }
+
+    // TODO(jakemac): mixins (derive from behaviors?)
+  }
+
   Iterable<Element> get elements => elementsMap.values;
   Iterable<Mixin> get mixins => mixinsMap.values;
 
@@ -88,12 +99,20 @@ abstract class NamedEntry {
   String description;
 
   NamedEntry(this.name, this.description);
+
+  NamedEntry.fromJson(Map jsonNamedEntry)
+    : name = jsonNamedEntry['name'],
+      description = jsonNamedEntry['description'];
 }
 
 /// An entry that has type information (like arguments and properties).
 abstract class TypedEntry extends NamedEntry {
   String type;
   TypedEntry(name, desc, [this.type]) : super(name, desc);
+
+  TypedEntry.fromJson(Map jsonTypedEntry)
+      : type = jsonTypedEntry['type'],
+        super.fromJson(jsonTypedEntry);
 }
 
 /// An import to another html element.
@@ -107,11 +126,24 @@ class Import extends Entry {
 }
 
 class Class extends NamedEntry {
+  // TODO(jakemac): Rename to `extendsName`.
   String extendName;
   final Map<String, Property> properties = {};
   final List<Method> methods = [];
 
   Class(name, this.extendName) : super(name, '');
+
+  Class.fromJson(Map jsonClass) : super.fromJson(jsonClass) {
+    extendName = jsonClass['extendsName'];
+
+    for (Map property in jsonClass['properties']) {
+      properties[property['name']] = new Property.fromJson(property);
+    }
+
+    for (Map method in jsonClass['methods']) {
+      methods.add(new Method.fromJson(method));
+    }
+  }
 
   void _prettyPrint(StringBuffer sb) {
     sb.write('$name:\n');
@@ -158,6 +190,10 @@ class Element extends Class {
 
   Element(String name, String extendName) : super(name, extendName);
 
+  Element.fromJson(Map jsonElement) : super.fromJson(jsonElement) {
+    // TODO(jakemac): mixins
+  }
+
   void _prettyPrint(StringBuffer sb) {
     sb.writeln('**Element**');
     super._prettyPrint(sb);
@@ -183,6 +219,11 @@ class Property extends TypedEntry {
   Property(name, desc, {this.hasGetter: false, this.hasSetter: false})
       : super(name, desc);
 
+  Property.fromJson(Map jsonProperty) : super.fromJson(jsonProperty) {
+    hasGetter = jsonProperty['hasGetter'];
+    hasSetter = jsonProperty['hasSetter'];
+  }
+
   void _prettyPrint(StringBuffer sb) {
     sb.write('$type $name;');
   }
@@ -194,6 +235,16 @@ class Method extends TypedEntry {
   List<Argument> args = [];
   List<Argument> optionalArgs = [];
   Method(name, desc) : super(name, desc);
+
+  Method.fromJson(Map jsonMethod) : super.fromJson(jsonMethod) {
+    isVoid = jsonMethod['isVoid'];
+
+    for (Map arg in jsonMethod['args']) {
+      args.add(new Argument.fromJson(arg));
+    }
+
+    // TODO(jakemac): Support optional args.
+  }
 
   void _prettyPrint(StringBuffer sb) {
     if (isVoid) sb.write('void ');
@@ -227,6 +278,8 @@ class Method extends TypedEntry {
 /// Collects name and type information for arguments.
 class Argument extends TypedEntry {
   Argument(name, desc, type) : super(name, desc, type);
+
+  Argument.fromJson(Map jsonArgument) : super.fromJson(jsonArgument);
 
   void _prettyPrint(StringBuffer sb) {
     if (type != null) {

@@ -11,6 +11,7 @@ packages
 *.sw?
 .idea/
 .pub
+node_modules
 
 # Include when developing application packages.
 pubspec.lock

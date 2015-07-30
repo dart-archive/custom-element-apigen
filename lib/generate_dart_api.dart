@@ -6,6 +6,8 @@
 // Code distributed by Google as part of the polymer project is also
 // subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'src/ast.dart';
@@ -40,7 +42,7 @@ GlobalConfig parseArgs(args, String program) {
   return config;
 }
 
-void generateWrappers(GlobalConfig config) {
+Future generateWrappers(GlobalConfig config) async {
   var fileSummaries = [];
   var elementSummaries = {};
   var mixinSummaries = {};
@@ -49,9 +51,9 @@ void generateWrappers(GlobalConfig config) {
 
   // Parses a file at [path] into a [FileSummary] and adds everything found into
   // [fileSummaries], [elementSummaries], and [mixinSummaries].
-  void parseFile(String path, int totalLength) {
+  Future parseFile(String path, int totalLength) async {
     _progress('${++i} of $totalLength: $path');
-    var summary = _parseFile(path);
+    var summary = await _parseFile(path);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
       var name = elementSummary.name;
@@ -73,10 +75,11 @@ void generateWrappers(GlobalConfig config) {
 
   _progress('Parsing files... ');
   var parsedFilesLength = config.files.length + config.filesToLoad.length;
-  config.files.forEach((fileConfig) {
-    parseFile(fileConfig.inputPath, parsedFilesLength);
+  await Future.forEach(config.files, (fileConfig) async {
+    await parseFile(fileConfig.inputPath, parsedFilesLength);
   });
-  config.filesToLoad.forEach((path) => parseFile(path, parsedFilesLength));
+  await Future.forEach(config.filesToLoad,
+        (path) async => await parseFile(path, parsedFilesLength));
 
   _progress('Running codegen... ');
   len = config.files.length;
@@ -136,30 +139,45 @@ void _generateImportStub(String inputPath, String packageName) {
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-FileSummary _parseFile(String inputPath, {bool ignoreFileErrors: false}) {
-  _progressLineBroken = false;
-  if (!new File(inputPath).existsSync()) {
-    if (ignoreFileErrors) {
-      return new FileSummary();
-    } else {
-      print("error: file $inputPath doesn't exist");
-      exit(1);
-    }
-  }
-  var isHtml = inputPath.endsWith('.html');
-  var text = new File(inputPath).readAsStringSync();
-  var summary = new PolymerParser(text,
-      isHtml: isHtml, onWarning: (s) => _showMessage('warning: $s')).parse();
+Future<FileSummary> _parseFile(String inputPath, {bool ignoreFileErrors: false}) async {
 
-  if (summary.elements.isEmpty && summary.mixins.isEmpty && isHtml) {
-    // If we didn't find any elements, try to find a corresponding *.js file
-    var jsPath = inputPath.replaceFirst('.html', '.js');
-    var jsSummary = _parseFile(jsPath, ignoreFileErrors: true);
-    summary.elementsMap = jsSummary.elementsMap;
-    summary.mixinsMap = jsSummary.mixinsMap;
-  }
-  _showMessage('$summary');
-  return summary;
+  var results = await Process.run(
+      'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
+  if (results.exitCode != 0) throw '''
+Failed to parse element files!
+
+exit code: ${results.exitCode}
+stderr: ${results.stderr}
+stdout: ${results.stdout}
+''';
+
+  var jsonFileSummary = JSON.decode(results.stdout);
+  assert(jsonFileSummary is Map);
+
+  return new FileSummary.fromJson(jsonFileSummary);
+//  _progressLineBroken = false;
+//  if (!new File(inputPath).existsSync()) {
+//    if (ignoreFileErrors) {
+//      return new FileSummary();
+//    } else {
+//      print("error: file $inputPath doesn't exist");
+//      exit(1);
+//    }
+//  }
+//  var isHtml = inputPath.endsWith('.html');
+//  var text = new File(inputPath).readAsStringSync();
+//  var summary = new PolymerParser(text,
+//      isHtml: isHtml, onWarning: (s) => _showMessage('warning: $s')).parse();
+//
+//  if (summary.elements.isEmpty && summary.mixins.isEmpty && isHtml) {
+//    // If we didn't find any elements, try to find a corresponding *.js file
+//    var jsPath = inputPath.replaceFirst('.html', '.js');
+//    var jsSummary = _parseFile(jsPath, ignoreFileErrors: true);
+//    summary.elementsMap = jsSummary.elementsMap;
+//    summary.mixinsMap = jsSummary.mixinsMap;
+//  }
+//  _showMessage('$summary');
+//  return summary;
 }
 
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
