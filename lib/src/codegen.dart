@@ -9,7 +9,7 @@
 library custom_element_apigen.src.codegen;
 
 import 'package:path/path.dart' as path;
-import 'package:polymer/html_element_names.dart';
+import 'html_element_names.dart';
 
 import 'config.dart';
 import 'ast.dart';
