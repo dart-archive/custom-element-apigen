@@ -1,0 +1,15 @@
+name: e2e_test
+version: 0.0.0
+author: Polymer.dart Authors <web-ui-dev@dartlang.org>
+dependencies:
+  custom_element_apigen:
+    path: ../
+  test: ^0.12.0
+  polymer_interop: ^0.2.0
+dependency_overrides:
+  polymer_interop:
+    git:
+      ref: 0.2.0-dev
+      url: https://github.com/dart-lang/polymer_interop.git
+environment:
+  sdk: '>=1.6.0 <2.0.0'

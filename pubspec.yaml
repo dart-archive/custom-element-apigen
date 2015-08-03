@@ -6,6 +6,7 @@ homepage: https://github.com/dart-lang/custom-element-apigen
 dependencies:
   html: ">=0.12.0 <0.13.0"
   path: ">=1.0.0 <2.0.0"
+  test: ^0.12.0
   yaml: ">=1.0.0 <3.0.0"
   # TODO(sigmund): maybe remove these dependencies? They are required only for
   # the generated code. We could make the codegen ensure that it is listed in

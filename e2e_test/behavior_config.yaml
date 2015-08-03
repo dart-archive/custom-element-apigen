@@ -1,0 +1,5 @@
+# Configuration for running tool/generate_dart_api.dart
+files_to_generate:
+  - my_behavior/my_behavior.html
+  - my_element/my_element.html
+#  - my_element_with_behavior/my_element_with_behavior.html

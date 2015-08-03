@@ -73,22 +73,25 @@ void _generateProperty(
   var body = "jsElement[r'$name']";
   sb.write(comment == '' ? '\n' : '\n$comment\n');
   var t = type != null ? '$type ' : '';
-  sb.write('  ${t}get $dartName => $body;\n');
 
-  // Don't output the setter if it has a getter but no setter in the original
-  // source code. In all other cases we want a dart setter (normal js property
-  // with no getter or setter, or custom property with a js setter).
-  if (property.hasGetter && !property.hasSetter) return;
-  if (type == null) {
-    sb.write('  set $dartName(${t}value) { '
-        '$body = (value is Map || value is Iterable) ? '
-        'new JsObject.jsify(value) : value;}\n');
-  } else if (type == "JsArray") {
-    sb.write('  set $dartName(${t}value) { '
-        '$body = (value is Iterable) ? '
-        'new JsObject.jsify(value) : value;}\n');
-  } else {
-    sb.write('  set $dartName(${t}value) { $body = value; }\n');
+  // Write the getter if one exists.
+  if (property.hasGetter) {
+    sb.write('  ${t}get $dartName => $body;\n');
+  }
+
+  // Write the setter if one exists.
+  if (property.hasSetter) {
+    if (type == null) {
+      sb.write('  set $dartName(${t}value) { '
+      '$body = (value is Map || value is Iterable) ? '
+      'new JsObject.jsify(value) : value;}\n');
+    } else if (type == "JsArray") {
+      sb.write('  set $dartName(${t}value) { '
+      '$body = (value is Iterable) ? '
+      'new JsObject.jsify(value) : value;}\n');
+    } else {
+      sb.write('  set $dartName(${t}value) { $body = value; }\n');
+    }
   }
 }
 
@@ -104,6 +107,11 @@ void _generateMethod(
   }
   sb.write('  ');
   if (method.isVoid) sb.write('void ');
+  var type = method.type;
+  if (type != null) {
+    type = _docToDartType[type.toLowerCase()];
+    sb.write('$type ');
+  }
   var name = method.name;
   var dartName = getDartName(name);
   sb.write('$dartName(');

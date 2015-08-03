@@ -14,9 +14,12 @@ import 'src/ast.dart';
 import 'src/codegen.dart';
 import 'src/config.dart';
 export 'src/config.dart' show GlobalConfig;
-import 'src/parser.dart';
 
 bool verbose = false;
+
+// Allows a way to test things without actually writing to the file system.
+typedef File FileFactory(String path);
+File defaultFileFactory(String path) => new File(path);
 
 GlobalConfig parseArgs(args, String program) {
   if (args.length == 0) {
@@ -42,7 +45,8 @@ GlobalConfig parseArgs(args, String program) {
   return config;
 }
 
-Future generateWrappers(GlobalConfig config) async {
+Future generateWrappers(GlobalConfig config,
+      {FileFactory fileFactory: defaultFileFactory}) async {
   var fileSummaries = [];
   var elementSummaries = {};
   var mixinSummaries = {};
@@ -92,7 +96,7 @@ Future generateWrappers(GlobalConfig config) async {
     var splitSummaries = fileSummary.splitByFile(fileConfig.file_overrides);
     splitSummaries.forEach((String filePath, FileSummary summary) {
       _generateDartApi(summary, elementSummaries, mixinSummaries, inputPath,
-          fileConfig, filePath);
+          fileConfig, filePath, fileFactory);
     });
   });
 
@@ -115,15 +119,15 @@ Future generateWrappers(GlobalConfig config) async {
   i = 0;
   config.stubs.forEach((inputPath, packageName) {
     _progress('${++i} of $len: $inputPath');
-    _generateImportStub(inputPath, packageName);
+    _generateImportStub(inputPath, packageName, fileFactory);
   });
 
   _progress('Done');
   stdout.write('\n');
 }
 
-void _generateImportStub(String inputPath, String packageName) {
-  var file = new File(inputPath);
+void _generateImportStub(String inputPath, String packageName, FileFactory fileFactory) {
+  var file = fileFactory(inputPath);
   // File may have been deleted, make sure it still exists.
   file.createSync(recursive: true);
 
@@ -139,7 +143,8 @@ void _generateImportStub(String inputPath, String packageName) {
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-Future<FileSummary> _parseFile(String inputPath, {bool ignoreFileErrors: false}) async {
+Future<FileSummary> _parseFile(
+    String inputPath, {bool ignoreFileErrors: false}) async {
 
   var results = await Process.run(
       'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
@@ -155,29 +160,6 @@ stdout: ${results.stdout}
   assert(jsonFileSummary is Map);
 
   return new FileSummary.fromJson(jsonFileSummary);
-//  _progressLineBroken = false;
-//  if (!new File(inputPath).existsSync()) {
-//    if (ignoreFileErrors) {
-//      return new FileSummary();
-//    } else {
-//      print("error: file $inputPath doesn't exist");
-//      exit(1);
-//    }
-//  }
-//  var isHtml = inputPath.endsWith('.html');
-//  var text = new File(inputPath).readAsStringSync();
-//  var summary = new PolymerParser(text,
-//      isHtml: isHtml, onWarning: (s) => _showMessage('warning: $s')).parse();
-//
-//  if (summary.elements.isEmpty && summary.mixins.isEmpty && isHtml) {
-//    // If we didn't find any elements, try to find a corresponding *.js file
-//    var jsPath = inputPath.replaceFirst('.html', '.js');
-//    var jsSummary = _parseFile(jsPath, ignoreFileErrors: true);
-//    summary.elementsMap = jsSummary.elementsMap;
-//    summary.mixinsMap = jsSummary.mixinsMap;
-//  }
-//  _showMessage('$summary');
-//  return summary;
 }
 
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
@@ -188,7 +170,8 @@ stdout: ${results.stdout}
 /// output files.
 void _generateDartApi(FileSummary summary,
     Map<String, Element> elementSummaries, Map<String, Mixin> mixinSummaries,
-    String inputPath, FileConfig config, [String fileName]) {
+    String inputPath, FileConfig config, String filePath,
+    FileFactory fileFactory) {
   _progressLineBroken = false;
   var segments = path.split(inputPath);
   if (segments.length < 4 ||
@@ -202,8 +185,8 @@ void _generateDartApi(FileSummary summary,
 
   var dashName = path.joinAll(segments.getRange(2, segments.length));
   // Use the filename if overridden.
-  var name = fileName != null
-      ? fileName
+  var name = filePath != null
+      ? filePath
       : path.withoutExtension(segments.last).replaceAll('-', '_');
   var isSubdir = segments.length > 4;
   var outputDirSegments = ['lib'];
@@ -232,7 +215,7 @@ void _generateDartApi(FileSummary summary,
         .write(generateClass(mixin, config, elementSummaries, mixinSummaries));
     first = false;
   }
-  new File(path.join(outputDir, '$name.dart'))
+  fileFactory(path.join(outputDir, '$name.dart'))
     ..createSync(recursive: true)
     ..writeAsStringSync(dartContent.toString());
 
@@ -250,7 +233,7 @@ void _generateDartApi(FileSummary summary,
 $extraImports
 <script type="application/dart" src="$name.dart"></script>\n
 ''';
-  new File(path.join(outputDir, '$name.html'))
+  fileFactory(path.join(outputDir, '$name.html'))
     ..createSync(recursive: true)
     ..writeAsStringSync(mainHtml);
 
@@ -261,7 +244,7 @@ $extraImports
 <link rel="import" href="${packageLibDir}src/$dashName">
 $noDartExtraImports
 ''';
-  new File(path.join(outputDir, '${name}_nodart.html'))
+  fileFactory(path.join(outputDir, '${name}_nodart.html'))
     ..createSync(recursive: true)
     ..writeAsStringSync('$htmlBody');
 }
