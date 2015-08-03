@@ -1,15 +1,15 @@
 // DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
-/// Dart API for the polymer element `my_element`.
-@HtmlImport('my_element_nodart.html')
-library e2e_test.my_element;
+/// Dart API for the polymer element `example_element`.
+@HtmlImport('example_element_nodart.html')
+library e2e_test.example_element;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;
 import 'package:web_components/web_components.dart';
 import 'package:polymer_interop/polymer_interop.dart';
 
-
+/// An example element.
 @CustomElementProxy('example-element')
 class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerProxyMixin {
   ExampleElement.created() : super.created();

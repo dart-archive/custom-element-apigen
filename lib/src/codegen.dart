@@ -189,12 +189,6 @@ String generateDirectives(String name, List<String> segments,
     }
   }
 
-  // Add imports for things each mixin `extends`.
-  for (var mixin in summary.mixins) {
-    if (mixin.extendName == null) continue;
-    extraImports.add(_generateMixinImport(mixin.extendName, config));
-  }
-
   for (var import in summary.imports) {
     var htmlImport = getImportPath(import, config, segments, packageLibDir,
         isDartFile: true);
@@ -229,9 +223,10 @@ String getImportPath(Import import, FileConfig config, List<String> segments,
   if (omit != null && omit.any((path) => importPath.contains(path))) {
     return null;
   }
+
   var importSegments = path.split(importPath);
-  if (importSegments[0] == '..') {
-    importSegments.removeRange(0, segments.length - 2);
+  if (importSegments[0] == 'lib' && importSegments[1] == 'src') {
+    importSegments.removeRange(0, 3);
   }
   var dartImport = path.joinAll(importSegments).replaceAll('-', '_');
   var targetElement = importSegments.last;

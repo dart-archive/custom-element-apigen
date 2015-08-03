@@ -12,9 +12,9 @@ main() {
   test('can generate wrappers', () async {
     var config = parseArgs(['behavior_config.yaml'], '');
     await generateWrappers(config, fileFactory: _mockFileFactory);
-    expectFilesCreated('my_behavior');
-    expectFilesCreated('my_element');
-//    expectFilesCreated('my_element_with_behavior');
+    expectFilesCreated('example_behavior');
+    expectFilesCreated('example_element');
+    expectFilesCreated('example_element_with_behavior');
   });
 }
 

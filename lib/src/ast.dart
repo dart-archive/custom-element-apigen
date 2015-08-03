@@ -25,7 +25,9 @@ class FileSummary {
       elementsMap[element['name']] = new Element.fromJson(element);
     }
 
-    // TODO(jakemac): mixins (derive from behaviors?)
+    for (Map mixin in jsonSummary['behaviors']) {
+      mixinsMap[mixin['name']] = new Mixin.fromJson(mixin);
+    }
   }
 
   Iterable<Element> get elements => elementsMap.values;
@@ -172,6 +174,8 @@ class Class extends NamedEntry {
 class Mixin extends Class {
   Mixin(String name, String extendName) : super(name, extendName);
 
+  Mixin.fromJson(Map jsonMixin) : super.fromJson(jsonMixin);
+
   _prettyPrint(StringBuffer sb) {
     sb.writeln('**Mixin**');
     super._prettyPrint(sb);
@@ -191,7 +195,9 @@ class Element extends Class {
   Element(String name, String extendName) : super(name, extendName);
 
   Element.fromJson(Map jsonElement) : super.fromJson(jsonElement) {
-    // TODO(jakemac): mixins
+    for (String mixin in _flatten(jsonElement['behaviors'])) {
+      mixins.add(mixin.replaceFirst('Polymer.', ''));
+    }
   }
 
   void _prettyPrint(StringBuffer sb) {
@@ -289,4 +295,21 @@ class Argument extends TypedEntry {
     }
     sb.write(name);
   }
+}
+
+List _flatten(List items) {
+  var flattened = [];
+
+  addAll(items) {
+    for (var item in items) {
+      if (item is List) {
+        addAll(item);
+      } else {
+        flattened.add(item);
+      }
+    }
+  }
+  addAll(items);
+
+  return flattened;
 }
