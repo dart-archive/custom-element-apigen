@@ -34,7 +34,7 @@ class FileSummary {
   Iterable<Mixin> get mixins => mixinsMap.values;
 
   String toString() =>
-      'imports: $imports, elements: $elements, mixins: $mixins';
+      'imports:\n$imports, elements:\n$elements, mixins:\n$mixins';
 
   /// Splits this summary into multiple summaries based on [file_overrides]. The
   /// keys are file names and the values are classes that should live in that
@@ -149,13 +149,13 @@ class Class extends NamedEntry {
 
   void _prettyPrint(StringBuffer sb) {
     sb.write('$name:\n');
-    sb.write('properties:');
+    sb.write('properties:\n');
     for (var p in properties.values) {
       sb.write('    - ');
       p._prettyPrint(sb);
       sb.write('\n');
     }
-    sb.write('methods:');
+    sb.write('methods:\n');
     for (var m in methods) {
       sb.write('    - ');
       m._prettyPrint(sb);
@@ -172,9 +172,13 @@ class Class extends NamedEntry {
 }
 
 class Mixin extends Class {
+  List<String> additionalMixins;
+
   Mixin(String name, String extendName) : super(name, extendName);
 
-  Mixin.fromJson(Map jsonMixin) : super.fromJson(jsonMixin);
+  Mixin.fromJson(Map jsonMixin)
+      : additionalMixins = jsonMixin['behaviors'],
+        super.fromJson(jsonMixin);
 
   _prettyPrint(StringBuffer sb) {
     sb.writeln('**Mixin**');
@@ -203,7 +207,7 @@ class Element extends Class {
   void _prettyPrint(StringBuffer sb) {
     sb.writeln('**Element**');
     super._prettyPrint(sb);
-    sb.writeln('  mixins:');
+    sb.writeln('  mixins:\n');
     for (var mixin in mixins) {
       sb.writeln('    - $mixin');
     }

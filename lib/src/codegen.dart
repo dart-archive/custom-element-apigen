@@ -23,7 +23,11 @@ String generateClass(Class classSummary, FileConfig config,
     baseExtendName = _baseExtendName(classSummary.extendName, elementSummaries);
     sb.write(_generateElementHeader(classSummary.name, comment,
         classSummary.extendName, baseExtendName, classSummary.mixins
-            .map((String name) => mixinSummaries[name])
+            .map((String name) {
+              var mixin = mixinSummaries[name];
+              if (mixin == null) throw 'Unknown Mixin $name';
+              return mixin;
+            })
             .toList()));
   } else if (classSummary is Mixin) {
     sb.write(_generateMixinHeader(
@@ -107,9 +111,9 @@ void _generateMethod(
   }
   sb.write('  ');
   if (method.isVoid) sb.write('void ');
-  var type = method.type;
+  var type = method.type != null ?
+      _docToDartType[method.type.toLowerCase()] : null;
   if (type != null) {
-    type = _docToDartType[type.toLowerCase()];
     sb.write('$type ');
   }
   var name = method.name;
@@ -181,12 +185,20 @@ String generateDirectives(String name, List<String> segments,
       var mixin = mixinSummaries[mixinName];
       if (mixin == null) {
         throw 'Unable to find mixin $mixinName. Make sure the mixin file is '
-            'loaded. If you don\'t want to generate the mixin as a dart api '
-            'then you can use the `files_to_load` section to load it.';
+        'loaded. If you don\'t want to generate the mixin as a dart api '
+        'then you can use the `files_to_load` section to load it.';
       }
-      if (mixin.extendName == null) continue;
-      extraImports.add(_generateMixinImport(mixin.extendName, config));
+      if (mixin.additionalMixins == null) continue;
+      extraImports.addAll(
+          mixin.additionalMixins.map((m) => _generateMixinImport(m, config)));
     }
+  }
+
+  // Add imports for things each mixin `extends`.
+  for (var mixin in summary.mixins) {
+    if (mixin.additionalMixins == null) continue;
+    extraImports.addAll(
+        mixin.additionalMixins.map((m) => _generateMixinImport(m, config)));
   }
 
   for (var import in summary.imports) {
@@ -218,7 +230,7 @@ import 'package:polymer_interop/polymer_interop.dart';
 String getImportPath(Import import, FileConfig config, List<String> segments,
     String packageLibDir, {bool isDartFile: false}) {
   var importPath = import.importPath;
-  if (importPath.contains('polymer.html')) return null;
+  if (importPath == null || importPath.contains('polymer.html')) return null;
   var omit = config.omitImports;
   if (omit != null && omit.any((path) => importPath.contains(path))) {
     return null;
@@ -226,7 +238,13 @@ String getImportPath(Import import, FileConfig config, List<String> segments,
 
   var importSegments = path.split(importPath);
   if (importSegments[0] == 'lib' && importSegments[1] == 'src') {
-    importSegments.removeRange(0, 3);
+    importSegments.removeRange(0, 2);
+    // If it lives in the top level dir of an element folder, put it in the top
+    // level dir of lib. However, if its in a subdir of the element folder, then
+    // we keep it as is.
+    if (importSegments.length == 2) {
+      importSegments.removeAt(0);
+    }
   }
   var dartImport = path.joinAll(importSegments).replaceAll('-', '_');
   var targetElement = importSegments.last;
@@ -245,6 +263,7 @@ String getImportPath(Import import, FileConfig config, List<String> segments,
 }
 
 String _generateMixinImport(String name, FileConfig config) {
+  name = name.replaceFirst('Polymer.', '');
   var packageName = config.global.findPackageNameForElement(name);
   var fileName = '${_toFileName(name)}.dart';
   var mixinImport =
@@ -282,8 +301,11 @@ String _generateElementHeader(String name, String comment, String extendName,
 
   var mixinNames = [];
   mixins.forEach((Mixin m) {
-    if (m.extendName != null) mixinNames.add(m.extendName);
-    mixinNames.add(m.name);
+    mixinNames.add(m.name.replaceFirst('Polymer.', ''));
+    if (m.additionalMixins != null) {
+      mixinNames.addAll(
+          m.additionalMixins.map((n) => n.replaceFirst('Polymer.', '')));
+    }
   });
 
   var optionalMixinString = mixinNames.isEmpty
@@ -364,4 +386,5 @@ final _docToDartType = {
   'object': null, // keep as dynamic
   'any': null, // keep as dynamic
   'element': 'Element',
+  'null': null
 };

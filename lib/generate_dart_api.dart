@@ -68,7 +68,7 @@ Future generateWrappers(GlobalConfig config,
       elementSummaries[name] = elementSummary;
     }
     for (var mixinSummary in summary.mixins) {
-      var name = mixinSummary.name;
+      var name = mixinSummary.name.replaceFirst('Polymer.', '');
       if (mixinSummaries.containsKey(name)) {
         print('Error: found two mixins with the same name ${name}');
         exit(1);
@@ -148,18 +148,27 @@ Future<FileSummary> _parseFile(
 
   var results = await Process.run(
       'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
-  if (results.exitCode != 0) throw '''
+  if (results.exitCode != 0 || results.stderr != '') _parseError(results);
+
+  var jsonFileSummary;
+  try {
+    jsonFileSummary = JSON.decode(results.stdout);
+    assert(jsonFileSummary is Map);
+  } catch(e) {
+    _parseError(results);
+  }
+
+  return new FileSummary.fromJson(jsonFileSummary);
+}
+
+_parseError(ProcessResult results) {
+  throw '''
 Failed to parse element files!
 
 exit code: ${results.exitCode}
 stderr: ${results.stderr}
 stdout: ${results.stdout}
 ''';
-
-  var jsonFileSummary = JSON.decode(results.stdout);
-  assert(jsonFileSummary is Map);
-
-  return new FileSummary.fromJson(jsonFileSummary);
 }
 
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
