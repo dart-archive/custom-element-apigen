@@ -46,7 +46,7 @@ GlobalConfig parseArgs(args, String program) {
 }
 
 Future generateWrappers(GlobalConfig config,
-      {FileFactory fileFactory: defaultFileFactory}) async {
+    {FileFactory fileFactory: defaultFileFactory}) async {
   var fileSummaries = [];
   var elementSummaries = {};
   var mixinSummaries = {};
@@ -85,7 +85,7 @@ Future generateWrappers(GlobalConfig config,
     await parseFile(fileConfig.inputPath, parsedFilesLength);
   });
   await Future.forEach(config.filesToLoad,
-        (path) async => await parseFile(path, parsedFilesLength));
+      (path) async => await parseFile(path, parsedFilesLength));
 
   _progress('Running codegen... ');
   len = config.files.length;
@@ -128,7 +128,8 @@ Future generateWrappers(GlobalConfig config,
   stdout.write('\n');
 }
 
-void _generateImportStub(String inputPath, String packageName, FileFactory fileFactory) {
+void _generateImportStub(
+    String inputPath, String packageName, FileFactory fileFactory) {
   var file = fileFactory(inputPath);
   // File may have been deleted, make sure it still exists.
   file.createSync(recursive: true);
@@ -145,9 +146,8 @@ void _generateImportStub(String inputPath, String packageName, FileFactory fileF
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-Future<FileSummary> _parseFile(
-    String inputPath, {bool ignoreFileErrors: false}) async {
-
+Future<FileSummary> _parseFile(String inputPath,
+    {bool ignoreFileErrors: false}) async {
   var results = await Process.run(
       'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
   if (results.exitCode != 0 || results.stderr != '') _parseError(results);
@@ -156,7 +156,7 @@ Future<FileSummary> _parseFile(
   try {
     jsonFileSummary = JSON.decode(results.stdout);
     assert(jsonFileSummary is Map);
-  } catch(e) {
+  } catch (e) {
     _parseError(results);
   }
 

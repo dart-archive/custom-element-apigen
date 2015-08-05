@@ -17,8 +17,7 @@ class FileSummary {
   Map<String, Mixin> mixinsMap = {};
 
   FileSummary.fromJson(Map jsonSummary) {
-    imports = jsonSummary['imports'].map((path) => new Import(path))
-        .toList();
+    imports = jsonSummary['imports'].map((path) => new Import(path)).toList();
 
     for (Map element in jsonSummary['elements']) {
       elementsMap[element['name']] = new Element.fromJson(element);
@@ -103,8 +102,8 @@ abstract class NamedEntry {
   FileSummary summary;
 
   NamedEntry.fromJson(Map jsonNamedEntry)
-    : name = jsonNamedEntry['name'],
-      description = jsonNamedEntry['description'];
+      : name = jsonNamedEntry['name'],
+        description = jsonNamedEntry['description'];
 }
 
 /// An entry that has type information (like arguments and properties).

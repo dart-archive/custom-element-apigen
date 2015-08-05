@@ -24,11 +24,10 @@ String generateClass(Class classSummary, FileConfig config,
     sb.write(_generateElementHeader(classSummary.name, comment,
         classSummary.extendName, baseExtendName, classSummary.mixins
             .map((String name) {
-              var mixin = mixinSummaries[name];
-              if (mixin == null) throw 'Unknown Mixin $name';
-              return mixin;
-            })
-            .toList()));
+      var mixin = mixinSummaries[name];
+      if (mixin == null) throw 'Unknown Mixin $name';
+      return mixin;
+    }).toList()));
   } else if (classSummary is Mixin) {
     sb.write(_generateMixinHeader(
         classSummary.name, classSummary.extendName, comment));
@@ -65,8 +64,12 @@ Function _substituteFunction(Map<String, String> nameSubstitutions) {
   };
 }
 
-const _propertiesToSkip =
-    const ['properties', 'listeners', 'observers', 'hostAttributes'];
+const _propertiesToSkip = const [
+  'properties',
+  'listeners',
+  'observers',
+  'hostAttributes'
+];
 
 void _generateProperty(
     Property property, StringBuffer sb, String getDartName(String)) {
@@ -94,20 +97,25 @@ void _generateProperty(
   if (property.hasSetter) {
     if (type == null) {
       sb.write('  set $dartName(${t}value) { '
-      '$body = (value is Map || value is Iterable) ? '
-      'new JsObject.jsify(value) : value;}\n');
+          '$body = (value is Map || value is Iterable) ? '
+          'new JsObject.jsify(value) : value;}\n');
     } else if (type == "JsArray") {
       sb.write('  set $dartName(${t}value) { '
-      '$body = (value is Iterable) ? '
-      'new JsObject.jsify(value) : value;}\n');
+          '$body = (value is Iterable) ? '
+          'new JsObject.jsify(value) : value;}\n');
     } else {
       sb.write('  set $dartName(${t}value) { $body = value; }\n');
     }
   }
 }
 
-const _methodsToSkip =
-    const ['created', 'attached', 'detached', 'ready', 'attributeChanged'];
+const _methodsToSkip = const [
+  'created',
+  'attached',
+  'detached',
+  'ready',
+  'attributeChanged'
+];
 
 void _generateMethod(
     Method method, StringBuffer sb, String getDartName(String)) {
@@ -125,8 +133,8 @@ void _generateMethod(
   }
   sb.write('  ');
   if (method.isVoid) sb.write('void ');
-  var type = method.type != null ?
-      _docToDartType[method.type.toLowerCase()] : null;
+  var type =
+      method.type != null ? _docToDartType[method.type.toLowerCase()] : null;
   if (type != null) {
     sb.write('$type ');
   }
@@ -176,8 +184,8 @@ void _generateArgList(
 String generateDirectives(String name, List<String> segments,
     FileSummary summary, FileConfig config, String packageLibDir,
     Map<String, Mixin> mixinSummaries) {
-  var libName = path.withoutExtension(
-      segments.map((s) => s.replaceAll('-', '_')).join('.'));
+  var libName = path
+      .withoutExtension(segments.map((s) => s.replaceAll('-', '_')).join('.'));
   var elementName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
 
@@ -203,12 +211,13 @@ String generateDirectives(String name, List<String> segments,
       var mixin = mixinSummaries[mixinName];
       if (mixin == null) {
         throw 'Unable to find mixin $mixinName. Make sure the mixin file is '
-        'loaded. If you don\'t want to generate the mixin as a dart api '
-        'then you can use the `files_to_load` section to load it.';
+            'loaded. If you don\'t want to generate the mixin as a dart api '
+            'then you can use the `files_to_load` section to load it.';
       }
       if (mixin.additionalMixins == null) continue;
-      extraImports.addAll(mixin.additionalMixins.map((m) =>
-          _generateMixinImport(m, config, mixinSummaries, packageLibDir))
+      extraImports.addAll(mixin.additionalMixins
+          .map((m) =>
+              _generateMixinImport(m, config, mixinSummaries, packageLibDir))
           .where((import) => import != null));
     }
   }
@@ -216,8 +225,9 @@ String generateDirectives(String name, List<String> segments,
   // Add imports for things each mixin `extends`.
   for (var mixin in summary.mixins) {
     if (mixin.additionalMixins == null) continue;
-    extraImports.addAll(mixin.additionalMixins.map(
-        (m) => _generateMixinImport(m, config, mixinSummaries, packageLibDir))
+    extraImports.addAll(mixin.additionalMixins
+        .map((m) =>
+            _generateMixinImport(m, config, mixinSummaries, packageLibDir))
         .where((import) => import != null));
   }
 
@@ -387,7 +397,7 @@ String _toCamelCase(String dashName) => dashName
     .join('');
 
 String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
-                        String packageLibDir, FileConfig config) {
+    String packageLibDir, FileConfig config) {
   className = className.replaceFirst('Polymer.', '');
   var mixin = mixinSummaries[className];
   if (mixin == null) throw 'Unknown Mixin $className';
@@ -403,8 +413,8 @@ String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
   var parts = path.split(fileSummary.path);
   // Check for `packages` imports.
   if (parts[0] == 'packages') {
-    return fileSummary.path.replaceFirst('packages/', 'package:')
-        .replaceFirst('.html', '.dart');
+    return fileSummary.path.replaceFirst('packages/', 'package:').replaceFirst(
+        '.html', '.dart');
   }
 
   var libPath;
