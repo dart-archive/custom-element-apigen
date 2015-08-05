@@ -23,8 +23,9 @@ class FileSummary {
       elementsMap[element['name']] = new Element.fromJson(element);
     }
 
-    for (Map mixin in jsonSummary['behaviors']) {
-      mixinsMap[mixin['name']] = new Mixin.fromJson(mixin);
+    for (Map mixinMap in jsonSummary['behaviors']) {
+      var mixin = new Mixin.fromJson(mixinMap);
+      mixinsMap[mixin.name] = mixin;
     }
 
     path = jsonSummary['path'];
@@ -102,7 +103,7 @@ abstract class NamedEntry {
   FileSummary summary;
 
   NamedEntry.fromJson(Map jsonNamedEntry)
-      : name = jsonNamedEntry['name'],
+      : name = jsonNamedEntry['name'].replaceFirst('Polymer.', ''),
         description = jsonNamedEntry['description'];
 }
 
@@ -168,10 +169,10 @@ class Class extends NamedEntry {
 }
 
 class Mixin extends Class {
-  List<String> additionalMixins;
+  final List<String> additionalMixins;
 
   Mixin.fromJson(Map jsonMixin)
-      : additionalMixins = jsonMixin['behaviors'],
+      : additionalMixins = _allMixinNames(jsonMixin['behaviors']),
         super.fromJson(jsonMixin);
 
   _prettyPrint(StringBuffer sb) {
@@ -188,13 +189,11 @@ class Mixin extends Class {
 
 /// Data about a custom-element.
 class Element extends Class {
-  final List<String> mixins = [];
+  final List<String> mixins;
 
-  Element.fromJson(Map jsonElement) : super.fromJson(jsonElement) {
-    for (String mixin in _flatten(jsonElement['behaviors'])) {
-      mixins.add(mixin.replaceFirst('Polymer.', ''));
-    }
-  }
+  Element.fromJson(Map jsonElement)
+      : mixins = _allMixinNames(jsonElement['behaviors']),
+        super.fromJson(jsonElement);
 
   void _prettyPrint(StringBuffer sb) {
     sb.writeln('**Element**');
@@ -302,4 +301,13 @@ List _flatten(List items) {
   addAll(items);
 
   return flattened;
+}
+
+List<String> _allMixinNames(List behaviorNames) {
+  if (behaviorNames == null) return null;
+  var names = [];
+  for (String mixin in _flatten(behaviorNames)) {
+    names.add(mixin.replaceFirst('Polymer.', ''));
+  }
+  return names;
 }

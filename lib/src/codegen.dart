@@ -329,10 +329,9 @@ String _generateElementHeader(String name, String comment, String extendName,
 
   var mixinNames = [];
   mixins.forEach((Mixin m) {
-    mixinNames.add(m.name.replaceFirst('Polymer.', ''));
+    mixinNames.add(m.name);
     if (m.additionalMixins != null) {
-      mixinNames.addAll(
-          m.additionalMixins.map((n) => n.replaceFirst('Polymer.', '')));
+      mixinNames.addAll(m.additionalMixins);
     }
   });
 
@@ -398,7 +397,6 @@ String _toCamelCase(String dashName) => dashName
 
 String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
     String packageLibDir, FileConfig config) {
-  className = className.replaceFirst('Polymer.', '');
   var mixin = mixinSummaries[className];
   if (mixin == null) throw 'Unknown Mixin $className';
   var fileSummary = mixin.summary;

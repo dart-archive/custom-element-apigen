@@ -70,7 +70,7 @@ Future generateWrappers(GlobalConfig config,
     }
     for (var mixinSummary in summary.mixins) {
       mixinSummary.summary = summary;
-      var name = mixinSummary.name.replaceFirst('Polymer.', '');
+      var name = mixinSummary.name;
       if (mixinSummaries.containsKey(name)) {
         print('Error: found two mixins with the same name ${name}');
         exit(1);
