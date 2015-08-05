@@ -11,11 +11,10 @@
 library custom_element_apigen.src.ast;
 
 class FileSummary {
+  String path;
   List<Import> imports = [];
   Map<String, Element> elementsMap = {};
   Map<String, Mixin> mixinsMap = {};
-
-  FileSummary();
 
   FileSummary.fromJson(Map jsonSummary) {
     imports = jsonSummary['imports'].map((path) => new Import(path))
@@ -28,6 +27,8 @@ class FileSummary {
     for (Map mixin in jsonSummary['behaviors']) {
       mixinsMap[mixin['name']] = new Mixin.fromJson(mixin);
     }
+
+    path = jsonSummary['path'];
   }
 
   Iterable<Element> get elements => elementsMap.values;
@@ -61,22 +62,22 @@ class FileSummary {
 
     /// Builds a summary from this one given [classNames].
     FileSummary buildSummary(List<String> classNames) {
-      var summary = new FileSummary();
-      summary.imports = new List.from(imports);
-      summary.elementsMap = removeFromMap(remainingElements, classNames);
-      summary.mixinsMap = removeFromMap(remainingMixins, classNames);
-
-      return summary;
+      return new FileSummary.fromJson({
+        'imports': new List.from(imports),
+        'elementsMap': removeFromMap(remainingElements, classNames),
+        'mixinsMap': removeFromMap(remainingMixins, classNames)
+      });
     }
 
     file_overrides.forEach((String path, List<String> classNames) {
       summaries[path] = buildSummary(classNames);
     });
 
-    var defaultSummary = new FileSummary();
-    defaultSummary.imports = new List.from(imports);
-    defaultSummary.elementsMap = remainingElements;
-    defaultSummary.mixinsMap = remainingMixins;
+    var defaultSummary = new FileSummary.fromJson({
+      'imports': new List.from(imports),
+      'elementsMap': remainingElements,
+      'mixinsMap': remainingMixins,
+    });
 
     summaries[null] = defaultSummary;
 
@@ -99,8 +100,7 @@ abstract class Entry {
 abstract class NamedEntry {
   final String name;
   String description;
-
-  NamedEntry(this.name, this.description);
+  FileSummary summary;
 
   NamedEntry.fromJson(Map jsonNamedEntry)
     : name = jsonNamedEntry['name'],
@@ -110,7 +110,6 @@ abstract class NamedEntry {
 /// An entry that has type information (like arguments and properties).
 abstract class TypedEntry extends NamedEntry {
   String type;
-  TypedEntry(name, desc, [this.type]) : super(name, desc);
 
   TypedEntry.fromJson(Map jsonTypedEntry)
       : type = jsonTypedEntry['type'],
@@ -132,8 +131,6 @@ class Class extends NamedEntry {
   String extendName;
   final Map<String, Property> properties = {};
   final List<Method> methods = [];
-
-  Class(name, this.extendName) : super(name, '');
 
   Class.fromJson(Map jsonClass) : super.fromJson(jsonClass) {
     extendName = jsonClass['extendsName'];
@@ -174,8 +171,6 @@ class Class extends NamedEntry {
 class Mixin extends Class {
   List<String> additionalMixins;
 
-  Mixin(String name, String extendName) : super(name, extendName);
-
   Mixin.fromJson(Map jsonMixin)
       : additionalMixins = jsonMixin['behaviors'],
         super.fromJson(jsonMixin);
@@ -195,8 +190,6 @@ class Mixin extends Class {
 /// Data about a custom-element.
 class Element extends Class {
   final List<String> mixins = [];
-
-  Element(String name, String extendName) : super(name, extendName);
 
   Element.fromJson(Map jsonElement) : super.fromJson(jsonElement) {
     for (String mixin in _flatten(jsonElement['behaviors'])) {
@@ -226,9 +219,6 @@ class Property extends TypedEntry {
   bool hasGetter;
   bool hasSetter;
 
-  Property(name, desc, {this.hasGetter: false, this.hasSetter: false})
-      : super(name, desc);
-
   Property.fromJson(Map jsonProperty) : super.fromJson(jsonProperty) {
     hasGetter = jsonProperty['hasGetter'];
     hasSetter = jsonProperty['hasSetter'];
@@ -244,7 +234,6 @@ class Method extends TypedEntry {
   bool isVoid = true;
   List<Argument> args = [];
   List<Argument> optionalArgs = [];
-  Method(name, desc) : super(name, desc);
 
   Method.fromJson(Map jsonMethod) : super.fromJson(jsonMethod) {
     isVoid = jsonMethod['isVoid'];
@@ -287,8 +276,6 @@ class Method extends TypedEntry {
 
 /// Collects name and type information for arguments.
 class Argument extends TypedEntry {
-  Argument(name, desc, type) : super(name, desc, type);
-
   Argument.fromJson(Map jsonArgument) : super.fromJson(jsonArgument);
 
   void _prettyPrint(StringBuffer sb) {

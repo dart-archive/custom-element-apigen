@@ -2,7 +2,7 @@
 
 /// Dart API for the polymer element `example_element`.
 @HtmlImport('example_element_nodart.html')
-library e2e_test.example_element;
+library e2e_test.lib.src.example_element.example_element;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;

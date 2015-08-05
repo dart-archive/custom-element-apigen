@@ -2,7 +2,7 @@
 
 /// Dart API for the polymer element `example_element_with_behavior`.
 @HtmlImport('example_element_with_behavior_nodart.html')
-library e2e_test.example_element_with_behavior;
+library e2e_test.lib.src.example_element_with_behavior.example_element_with_behavior;
 
 import 'dart:html';
 import 'dart:js' show JsArray, JsObject;

@@ -65,8 +65,15 @@ Function _substituteFunction(Map<String, String> nameSubstitutions) {
   };
 }
 
+const _propertiesToSkip =
+    const ['properties', 'listeners', 'observers', 'hostAttributes'];
+
 void _generateProperty(
     Property property, StringBuffer sb, String getDartName(String)) {
+  // Don't add these to the generated classes, they are not meant to be called
+  // directly.
+  if (_propertiesToSkip.contains(property.name)) return;
+
   var comment = _toComment(property.description, 2);
   var type = property.type;
   if (type != null) {
@@ -99,8 +106,15 @@ void _generateProperty(
   }
 }
 
+const _methodsToSkip =
+    const ['created', 'attached', 'detached', 'ready', 'attributeChanged'];
+
 void _generateMethod(
     Method method, StringBuffer sb, String getDartName(String)) {
+  // Don't add these to the generated classes, they are not meant to be called
+  // directly.
+  if (_methodsToSkip.contains(method.name)) return;
+
   var comment = _toComment(method.description, 2);
   sb.write(comment == '' ? '\n' : '\n$comment\n');
   for (var arg in method.args) {
@@ -162,7 +176,9 @@ void _generateArgList(
 String generateDirectives(String name, List<String> segments,
     FileSummary summary, FileConfig config, String packageLibDir,
     Map<String, Mixin> mixinSummaries) {
-  var libName = name.replaceAll('-', '_');
+  var libName = path.withoutExtension(
+      segments.map((s) => s.replaceAll('-', '_')).join('.'));
+  var elementName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
 
   for (var element in summary.elements) {
@@ -179,7 +195,9 @@ String generateDirectives(String name, List<String> segments,
     }
 
     for (var mixinName in element.mixins) {
-      extraImports.add(_generateMixinImport(mixinName, config));
+      var import = _generateMixinImport(
+          mixinName, config, mixinSummaries, packageLibDir);
+      if (import != null) extraImports.add(import);
 
       // Add imports for things each mixin `extends`.
       var mixin = mixinSummaries[mixinName];
@@ -189,16 +207,18 @@ String generateDirectives(String name, List<String> segments,
         'then you can use the `files_to_load` section to load it.';
       }
       if (mixin.additionalMixins == null) continue;
-      extraImports.addAll(
-          mixin.additionalMixins.map((m) => _generateMixinImport(m, config)));
+      extraImports.addAll(mixin.additionalMixins.map((m) =>
+          _generateMixinImport(m, config, mixinSummaries, packageLibDir))
+          .where((import) => import != null));
     }
   }
 
   // Add imports for things each mixin `extends`.
   for (var mixin in summary.mixins) {
     if (mixin.additionalMixins == null) continue;
-    extraImports.addAll(
-        mixin.additionalMixins.map((m) => _generateMixinImport(m, config)));
+    extraImports.addAll(mixin.additionalMixins.map(
+        (m) => _generateMixinImport(m, config, mixinSummaries, packageLibDir))
+        .where((import) => import != null));
   }
 
   for (var import in summary.imports) {
@@ -215,7 +235,7 @@ String generateDirectives(String name, List<String> segments,
 // DO NOT EDIT: auto-generated with `pub run custom_element_apigen:update`
 
 /// Dart API for the polymer element `$name`.
-@HtmlImport('${libName}_nodart.html')
+@HtmlImport('${elementName}_nodart.html')
 library $packageName.$libName;
 
 import 'dart:html';
@@ -262,13 +282,11 @@ String getImportPath(Import import, FileConfig config, List<String> segments,
   return dartImport;
 }
 
-String _generateMixinImport(String name, FileConfig config) {
-  name = name.replaceFirst('Polymer.', '');
-  var packageName = config.global.findPackageNameForElement(name);
-  var fileName = '${_toFileName(name)}.dart';
-  var mixinImport =
-      packageName != null ? 'package:$packageName/$fileName' : fileName;
-  return "import '$mixinImport';";
+String _generateMixinImport(String name, FileConfig config,
+    Map<String, Mixin> mixinSummaries, String packageLibDir) {
+  var filePath = _mixinImportPath(name, mixinSummaries, packageLibDir, config);
+  if (filePath == null) return null;
+  return "import '$filePath';";
 }
 
 String _generateMixinHeader(String name, String extendName, String comment) {
@@ -368,14 +386,35 @@ String _toCamelCase(String dashName) => dashName
     .map((e) => '${e[0].toUpperCase()}${e.substring(1)}')
     .join('');
 
-String _toFileName(String className) {
-  var fileName = new StringBuffer();
-  for (var i = 0; i < className.length; ++i) {
-    var lower = className[i].toLowerCase();
-    if (i > 0 && className[i] != lower) fileName.write('_');
-    fileName.write(lower);
+String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
+                        String packageLibDir, FileConfig config) {
+  className = className.replaceFirst('Polymer.', '');
+  var mixin = mixinSummaries[className];
+  if (mixin == null) throw 'Unknown Mixin $className';
+  var fileSummary = mixin.summary;
+  assert(fileSummary != null);
+
+  // Don't include omitted imports
+  var omit = config.omitImports;
+  if (omit != null && omit.any((path) => fileSummary.path.contains(path))) {
+    return null;
   }
-  return fileName.toString();
+
+  var parts = path.split(fileSummary.path);
+  // Check for `packages` imports.
+  if (parts[0] == 'packages') {
+    return fileSummary.path.replaceFirst('packages/', 'package:')
+        .replaceFirst('.html', '.dart');
+  }
+
+  var libPath;
+  if (parts.length == 4) {
+    libPath = parts.last;
+  } else {
+    libPath = path.join(parts.getRange(2, parts.length));
+  }
+  libPath = libPath.replaceAll('-', '_').replaceFirst('.html', '.dart');
+  return '$packageLibDir$libPath';
 }
 
 final _docToDartType = {

@@ -60,6 +60,7 @@ Future generateWrappers(GlobalConfig config,
     var summary = await _parseFile(path);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
+      elementSummary.summary = summary;
       var name = elementSummary.name;
       if (elementSummaries.containsKey(name)) {
         print('Error: found two elements with the same name ${name}');
@@ -68,6 +69,7 @@ Future generateWrappers(GlobalConfig config,
       elementSummaries[name] = elementSummary;
     }
     for (var mixinSummary in summary.mixins) {
+      mixinSummary.summary = summary;
       var name = mixinSummary.name.replaceFirst('Polymer.', '');
       if (mixinSummaries.containsKey(name)) {
         print('Error: found two mixins with the same name ${name}');
