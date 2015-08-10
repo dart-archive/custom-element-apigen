@@ -99,9 +99,9 @@ void _generateProperty(
       sb.write('  set $dartName(${t}value) { '
           '$body = (value is Map || value is Iterable) ? '
           'new JsObject.jsify(value) : value;}\n');
-    } else if (type == "JsArray") {
+    } else if (type == "List") {
       sb.write('  set $dartName(${t}value) { '
-          '$body = (value is Iterable) ? '
+          '$body = (value is! JsArray) ? '
           'new JsObject.jsify(value) : value;}\n');
     } else {
       sb.write('  set $dartName(${t}value) { $body = value; }\n');
@@ -427,7 +427,7 @@ String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
 
 final _docToDartType = {
   'boolean': 'bool',
-  'array': 'JsArray',
+  'array': 'List',
   'string': 'String',
   'number': 'num',
   'object': null, // keep as dynamic
