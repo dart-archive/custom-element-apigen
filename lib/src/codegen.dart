@@ -305,6 +305,7 @@ String _generateMixinHeader(String name, String extendName, String comment) {
   return '''
 
 $comment
+@BehaviorProxy(const ['Polymer', '$name'])
 abstract class $className implements CustomElementProxyMixin$maybeExtends {
 ''';
 }

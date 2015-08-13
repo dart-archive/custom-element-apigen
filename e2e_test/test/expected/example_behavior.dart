@@ -10,6 +10,7 @@ import 'package:web_components/web_components.dart';
 import 'package:polymer_interop/polymer_interop.dart';
 
 /// This is an example behavior!
+@BehaviorProxy(const ['Polymer', 'ExampleBehavior'])
 abstract class ExampleBehavior implements CustomElementProxyMixin {
 
   num get behaviorNum => jsElement[r'behaviorNum'];
