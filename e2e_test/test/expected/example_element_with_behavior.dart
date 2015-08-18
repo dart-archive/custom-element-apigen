@@ -12,7 +12,7 @@ import 'example_behavior.dart';
 
 /// An example element with a behavior.
 @CustomElementProxy('example-element-with-behavior')
-class ExampleElementWithBehavior extends HtmlElement with CustomElementProxyMixin, PolymerProxyMixin, ExampleBehavior {
+class ExampleElementWithBehavior extends HtmlElement with CustomElementProxyMixin, PolymerBase, ExampleBehavior {
   ExampleElementWithBehavior.created() : super.created();
   factory ExampleElementWithBehavior() => new Element.tag('example-element-with-behavior');
 }

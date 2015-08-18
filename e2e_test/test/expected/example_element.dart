@@ -11,7 +11,7 @@ import 'package:polymer_interop/polymer_interop.dart';
 
 /// An example element.
 @CustomElementProxy('example-element')
-class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerProxyMixin {
+class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerBase {
   ExampleElement.created() : super.created();
   factory ExampleElement() => new Element.tag('example-element');
 

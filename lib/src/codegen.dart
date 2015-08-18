@@ -318,11 +318,11 @@ String _generateElementHeader(String name, String comment, String extendName,
   var hasCustomElementProxyMixin = false;
   if (extendName == null) {
     extendClassName =
-        'HtmlElement with CustomElementProxyMixin, PolymerProxyMixin';
+        'HtmlElement with CustomElementProxyMixin, PolymerBase';
     hasCustomElementProxyMixin = true;
   } else if (!extendName.contains('-')) {
     extendClassName = '${HTML_ELEMENT_NAMES[baseExtendName]} with '
-        'CustomElementProxyMixin, PolymerProxyMixin';
+        'CustomElementProxyMixin, PolymerBase';
     hasCustomElementProxyMixin = true;
   } else {
     extendClassName = _toCamelCase(extendName);
