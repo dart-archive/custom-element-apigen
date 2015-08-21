@@ -15,6 +15,7 @@ main() {
     expectFilesCreated('example_behavior');
     expectFilesCreated('example_element');
     expectFilesCreated('example_element_with_behavior');
+    expectFilesCreated('example_multi_behavior');
   });
 }
 

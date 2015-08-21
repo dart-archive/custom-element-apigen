@@ -25,12 +25,10 @@ String generateClass(Class classSummary, FileConfig config,
         classSummary.extendName, baseExtendName, classSummary.mixins
             .map((String name) {
       var mixin = mixinSummaries[name];
-      if (mixin == null) throw 'Unknown Mixin $name';
       return mixin;
     }).toList()));
   } else if (classSummary is Mixin) {
-    sb.write(_generateMixinHeader(
-        classSummary.name, classSummary.extendName, comment));
+    sb.write(_generateMixinHeader(classSummary, comment, mixinSummaries));
   } else {
     throw 'unsupported summary type: $classSummary';
   }
@@ -299,14 +297,22 @@ String _generateMixinImport(String name, FileConfig config,
   return "import '$filePath';";
 }
 
-String _generateMixinHeader(String name, String extendName, String comment) {
-  var className = name.split('.').last;
-  var maybeExtends = extendName == null ? '' : ', $extendName';
+String _generateMixinHeader(Mixin summary, String comment, Map<String, Mixin> mixinSummaries) {
+  var className = summary.name.split('.').last;
+  var additional = new StringBuffer();
+  if (summary.extendName != null) additional.write(', ${summary.extendName}');
+  if (summary.additionalMixins != null) {
+    for (String mixinName in summary.additionalMixins) {
+      var mixinSummary = mixinSummaries[mixinName];
+      if (mixinSummary == null) throw 'Unknown Mixin $mixinName';
+      additional.write(', ${mixinSummary.name}');
+    }
+  }
   return '''
 
 $comment
-@BehaviorProxy(const ['Polymer', '$name'])
-abstract class $className implements CustomElementProxyMixin$maybeExtends {
+@BehaviorProxy(const ['Polymer', '${summary.name}'])
+abstract class $className implements CustomElementProxyMixin$additional {
 ''';
 }
 
