@@ -1,0 +1,101 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../../packages/polymer_interop/polymer.html">
+
+<!--
+An example element.
+
+@group Test Elements
+@element example-element
+-->
+
+<dom-module id="example-element">
+  <template>
+    <div>Hello world!</div>
+  </template>
+
+  <script>
+
+    (function() {
+      'use strict';
+
+      Polymer.ExampleElement = Polymer({
+        is: 'example-element',
+
+        properties: {
+          /**
+           * A public property created with the properties descriptor.
+           */
+          elementPublicProperty: {
+            type: Object,
+            value: function() {
+              return {};
+            }
+          },
+
+          /**
+           * A private property created with the properties descriptor.
+           */
+          _elementPrivateProperty: {
+            type: Array,
+            value: function() {
+              return [];
+            }
+          },
+
+          /**
+           * A read only property.
+           */
+          elementReadOnlyProperty: {
+            type: Number,
+            value: 1,
+            readOnly: true
+          }
+        },
+
+        /**
+         * @param  {string} stringParam
+         * @return {string}
+         */
+        elementFunction: function(stringParam) {
+          return stringParam;
+        },
+
+        /**
+         * @return {number}
+         */
+        get elementNum() {
+          return 1;
+        },
+
+        /**
+         * @param {number} newValue
+         */
+        set elementNum(newValue) {},
+
+        /**
+         * @return {number}
+         */
+        get elementNumGetterOnly() {
+          return 1;
+        },
+
+        /**
+         * @param {number} newValue
+         */
+        set elementNumSetterOnly(newValue) {},
+
+        elementVoidFunction: function() {}
+      });
+    })();
+
+  </script>
+</dom-module>

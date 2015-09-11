@@ -29,21 +29,24 @@ class GlobalConfig {
       packageMappings.sort();
     }
     for (var mapping in packageMappings) {
-      if (elementName.startsWith(mapping.prefix)) return mapping.packageName;
+      if (mapping._regex.hasMatch(elementName)) return mapping.packageName;
     }
     return null;
   }
 }
 
 class PackageMapping implements Comparable<PackageMapping> {
-  String prefix;
-  String packageName;
+  final String pattern;
+  final String packageName;
+  final RegExp _regex;
 
-  PackageMapping(this.prefix, this.packageName);
+  PackageMapping(String pattern, this.packageName)
+      : pattern = pattern,
+        _regex = new RegExp(pattern);
 
   /// Sort in reverse order of the prefix to ensure that longer prefixes are
   /// matched first.
-  int compareTo(PackageMapping other) => -prefix.compareTo(other.prefix);
+  int compareTo(PackageMapping other) => -pattern.compareTo(other.pattern);
 }
 
 /// Configuration information corresponding to a given HTML input file.

@@ -6,15 +6,20 @@
 // Code distributed by Google as part of the polymer project is also
 // subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'src/ast.dart';
 import 'src/codegen.dart';
 import 'src/config.dart';
 export 'src/config.dart' show GlobalConfig;
-import 'src/parser.dart';
 
 bool verbose = false;
+
+// Allows a way to test things without actually writing to the file system.
+typedef File FileFactory(String path);
+File defaultCreateFile(String path) => new File(path);
 
 GlobalConfig parseArgs(args, String program) {
   if (args.length == 0) {
@@ -40,7 +45,8 @@ GlobalConfig parseArgs(args, String program) {
   return config;
 }
 
-void generateWrappers(GlobalConfig config) {
+Future generateWrappers(GlobalConfig config,
+    {FileFactory createFile: defaultCreateFile}) async {
   var fileSummaries = [];
   var elementSummaries = {};
   var mixinSummaries = {};
@@ -49,11 +55,12 @@ void generateWrappers(GlobalConfig config) {
 
   // Parses a file at [path] into a [FileSummary] and adds everything found into
   // [fileSummaries], [elementSummaries], and [mixinSummaries].
-  void parseFile(String path, int totalLength) {
+  Future parseFile(String path, int totalLength) async {
     _progress('${++i} of $totalLength: $path');
-    var summary = _parseFile(path);
+    var summary = await _parseFile(path);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
+      elementSummary.summary = summary;
       var name = elementSummary.name;
       if (elementSummaries.containsKey(name)) {
         print('Error: found two elements with the same name ${name}');
@@ -62,6 +69,7 @@ void generateWrappers(GlobalConfig config) {
       elementSummaries[name] = elementSummary;
     }
     for (var mixinSummary in summary.mixins) {
+      mixinSummary.summary = summary;
       var name = mixinSummary.name;
       if (mixinSummaries.containsKey(name)) {
         print('Error: found two mixins with the same name ${name}');
@@ -73,10 +81,11 @@ void generateWrappers(GlobalConfig config) {
 
   _progress('Parsing files... ');
   var parsedFilesLength = config.files.length + config.filesToLoad.length;
-  config.files.forEach((fileConfig) {
-    parseFile(fileConfig.inputPath, parsedFilesLength);
+  await Future.forEach(config.files, (fileConfig) async {
+    await parseFile(fileConfig.inputPath, parsedFilesLength);
   });
-  config.filesToLoad.forEach((path) => parseFile(path, parsedFilesLength));
+  await Future.forEach(config.filesToLoad,
+      (path) async => await parseFile(path, parsedFilesLength));
 
   _progress('Running codegen... ');
   len = config.files.length;
@@ -89,7 +98,7 @@ void generateWrappers(GlobalConfig config) {
     var splitSummaries = fileSummary.splitByFile(fileConfig.file_overrides);
     splitSummaries.forEach((String filePath, FileSummary summary) {
       _generateDartApi(summary, elementSummaries, mixinSummaries, inputPath,
-          fileConfig, filePath);
+          fileConfig, filePath, createFile);
     });
   });
 
@@ -112,15 +121,16 @@ void generateWrappers(GlobalConfig config) {
   i = 0;
   config.stubs.forEach((inputPath, packageName) {
     _progress('${++i} of $len: $inputPath');
-    _generateImportStub(inputPath, packageName);
+    _generateImportStub(inputPath, packageName, createFile);
   });
 
   _progress('Done');
   stdout.write('\n');
 }
 
-void _generateImportStub(String inputPath, String packageName) {
-  var file = new File(inputPath);
+void _generateImportStub(
+    String inputPath, String packageName, FileFactory createFile) {
+  var file = createFile(inputPath);
   // File may have been deleted, make sure it still exists.
   file.createSync(recursive: true);
 
@@ -136,30 +146,31 @@ void _generateImportStub(String inputPath, String packageName) {
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-FileSummary _parseFile(String inputPath, {bool ignoreFileErrors: false}) {
-  _progressLineBroken = false;
-  if (!new File(inputPath).existsSync()) {
-    if (ignoreFileErrors) {
-      return new FileSummary();
-    } else {
-      print("error: file $inputPath doesn't exist");
-      exit(1);
-    }
-  }
-  var isHtml = inputPath.endsWith('.html');
-  var text = new File(inputPath).readAsStringSync();
-  var summary = new PolymerParser(text,
-      isHtml: isHtml, onWarning: (s) => _showMessage('warning: $s')).parse();
+Future<FileSummary> _parseFile(String inputPath,
+    {bool ignoreFileErrors: false}) async {
+  var results = await Process.run(
+      'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
+  if (results.exitCode != 0 || results.stderr != '') _parseError(results);
 
-  if (summary.elements.isEmpty && summary.mixins.isEmpty && isHtml) {
-    // If we didn't find any elements, try to find a corresponding *.js file
-    var jsPath = inputPath.replaceFirst('.html', '.js');
-    var jsSummary = _parseFile(jsPath, ignoreFileErrors: true);
-    summary.elementsMap = jsSummary.elementsMap;
-    summary.mixinsMap = jsSummary.mixinsMap;
+  var jsonFileSummary;
+  try {
+    jsonFileSummary = JSON.decode(results.stdout);
+    assert(jsonFileSummary is Map);
+  } catch (e) {
+    _parseError(results);
   }
-  _showMessage('$summary');
-  return summary;
+
+  return new FileSummary.fromJson(jsonFileSummary);
+}
+
+_parseError(ProcessResult results) {
+  throw '''
+Failed to parse element files!
+
+exit code: ${results.exitCode}
+stderr: ${results.stderr}
+stdout: ${results.stdout}
+''';
 }
 
 /// Takes a FileSummary, and generates a Dart API for it. The input code must be
@@ -170,7 +181,8 @@ FileSummary _parseFile(String inputPath, {bool ignoreFileErrors: false}) {
 /// output files.
 void _generateDartApi(FileSummary summary,
     Map<String, Element> elementSummaries, Map<String, Mixin> mixinSummaries,
-    String inputPath, FileConfig config, [String fileName]) {
+    String inputPath, FileConfig config, String filePath,
+    FileFactory createFile) {
   _progressLineBroken = false;
   var segments = path.split(inputPath);
   if (segments.length < 4 ||
@@ -184,8 +196,8 @@ void _generateDartApi(FileSummary summary,
 
   var dashName = path.joinAll(segments.getRange(2, segments.length));
   // Use the filename if overridden.
-  var name = fileName != null
-      ? fileName
+  var name = filePath != null
+      ? filePath
       : path.withoutExtension(segments.last).replaceAll('-', '_');
   var isSubdir = segments.length > 4;
   var outputDirSegments = ['lib'];
@@ -214,7 +226,7 @@ void _generateDartApi(FileSummary summary,
         .write(generateClass(mixin, config, elementSummaries, mixinSummaries));
     first = false;
   }
-  new File(path.join(outputDir, '$name.dart'))
+  createFile(path.join(outputDir, '$name.dart'))
     ..createSync(recursive: true)
     ..writeAsStringSync(dartContent.toString());
 
@@ -232,7 +244,7 @@ void _generateDartApi(FileSummary summary,
 $extraImports
 <script type="application/dart" src="$name.dart"></script>\n
 ''';
-  new File(path.join(outputDir, '$name.html'))
+  createFile(path.join(outputDir, '$name.html'))
     ..createSync(recursive: true)
     ..writeAsStringSync(mainHtml);
 
@@ -243,7 +255,7 @@ $extraImports
 <link rel="import" href="${packageLibDir}src/$dashName">
 $noDartExtraImports
 ''';
-  new File(path.join(outputDir, '${name}_nodart.html'))
+  createFile(path.join(outputDir, '${name}_nodart.html'))
     ..createSync(recursive: true)
     ..writeAsStringSync('$htmlBody');
 }

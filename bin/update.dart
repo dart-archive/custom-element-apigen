@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:custom_element_apigen/generate_dart_api.dart' as generator;
 
-main(args) {
+main(args) async {
   generator.GlobalConfig config =
       generator.parseArgs(args, 'pub run custom_elements_apigen:update');
 
@@ -23,7 +23,7 @@ main(args) {
     exit(1);
   }
 
-  generator.generateWrappers(config);
+  await generator.generateWrappers(config);
 
   // The file may be deleted at some point during the generator, make sure it
   // still exists.
