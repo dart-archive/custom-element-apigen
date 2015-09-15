@@ -23,6 +23,6 @@ To use it, you need to:
   * run the tool via `pub run custom_element_apigen:update configfile.yaml`
 
 There is not much documentation written for this tool. You can find examples of
-how this tool is used in the [polymer-elements][1] package.
+how this tool is used in the [polymer_elements][1] package.
 
-[1]: https://github.com/dart-lang/polymer-elements/
+[1]: https://github.com/dart-lang/polymer_elements/
