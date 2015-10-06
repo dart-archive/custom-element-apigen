@@ -11,7 +11,7 @@ dependencies:
   # TODO(sigmund): maybe remove these dependencies? They are required only for
   # the generated code. We could make the codegen ensure that it is listed in
   # the package pubspec instead.
-  polymer_interop: ^0.2.0
+  polymer_interop: ^1.0.0-rc.1
   web_components: ^0.12.0
 environment:
   sdk: '>=1.6.0 <2.0.0'
