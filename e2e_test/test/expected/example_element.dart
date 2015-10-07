@@ -33,6 +33,6 @@ class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerBa
   String elementFunction(String stringParam) =>
       jsElement.callMethod('elementFunction', [stringParam]);
 
-  void elementVoidFunction() =>
+  elementVoidFunction() =>
       jsElement.callMethod('elementVoidFunction', []);
 }

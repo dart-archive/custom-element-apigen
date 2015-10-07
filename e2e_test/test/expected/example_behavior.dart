@@ -32,6 +32,6 @@ abstract class ExampleBehavior implements CustomElementProxyMixin {
   String behaviorFunction(stringParam) =>
       jsElement.callMethod('behaviorFunction', [stringParam]);
 
-  void behaviorVoidFunction() =>
+  behaviorVoidFunction() =>
       jsElement.callMethod('behaviorVoidFunction', []);
 }

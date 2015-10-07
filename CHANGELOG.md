@@ -1,3 +1,8 @@
+## 0.2.0+1
+  * Remove `void` return types from all functions, and leave them as dynamic
+    instead. It is too common for js methods to be marked as having no return
+    type when they in fact do return something :(.
+
 ## 0.2.0
   * Update to polymer js 1.0 versions of polymer_interop and web_components
     packages. Not compatible with 0.5 elements, they should remain on 0.1.7.
