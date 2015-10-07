@@ -127,7 +127,6 @@ void _generateMethod(
     _generateArgComment(arg, sb);
   }
   sb.write('  ');
-  if (method.isVoid) sb.write('void ');
   var type =
       method.type != null ? _docToDartType[method.type.toLowerCase()] : null;
   if (type != null) {
