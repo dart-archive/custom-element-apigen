@@ -18,11 +18,11 @@ abstract class ExampleBehavior implements CustomElementProxyMixin {
 
   num get behaviorNumGetterOnly => jsElement[r'behaviorNumGetterOnly'];
 
-  set behaviorNumSetterOnly(value) { jsElement[r'behaviorNumSetterOnly'] = (value is Map || value is Iterable) ? new JsObject.jsify(value) : value;}
+  set behaviorNumSetterOnly(value) { jsElement[r'behaviorNumSetterOnly'] = (value is Map || (value is Iterable && value is! JsArray)) ? new JsObject.jsify(value) : value;}
 
   /// A public property created with the properties descriptor.
   get behaviorPublicProperty => jsElement[r'behaviorPublicProperty'];
-  set behaviorPublicProperty(value) { jsElement[r'behaviorPublicProperty'] = (value is Map || value is Iterable) ? new JsObject.jsify(value) : value;}
+  set behaviorPublicProperty(value) { jsElement[r'behaviorPublicProperty'] = (value is Map || (value is Iterable && value is! JsArray)) ? new JsObject.jsify(value) : value;}
 
   /// A read only property.
   num get behaviorReadOnlyProperty => jsElement[r'behaviorReadOnlyProperty'];

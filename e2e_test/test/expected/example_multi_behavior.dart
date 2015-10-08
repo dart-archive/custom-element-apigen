@@ -16,7 +16,7 @@ abstract class ExampleMultiBehavior implements CustomElementProxyMixin, ExampleB
 
   /// A public property created with the properties descriptor.
   get anotherPublicProperty => jsElement[r'anotherPublicProperty'];
-  set anotherPublicProperty(value) { jsElement[r'anotherPublicProperty'] = (value is Map || value is Iterable) ? new JsObject.jsify(value) : value;}
+  set anotherPublicProperty(value) { jsElement[r'anotherPublicProperty'] = (value is Map || (value is Iterable && value is! JsArray)) ? new JsObject.jsify(value) : value;}
 
   /// [stringParam]: {string}
   String anotherBehaviorFunction(stringParam) =>

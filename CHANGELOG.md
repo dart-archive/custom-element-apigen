@@ -1,3 +1,7 @@
+## 0.2.0+2
+  * Allow setting list/map properties to null.
+  * Don't re-jsify a JsArray in setters.
+
 ## 0.2.0+1
   * Remove `void` return types from all functions, and leave them as dynamic
     instead. It is too common for js methods to be marked as having no return
