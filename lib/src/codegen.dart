@@ -92,11 +92,11 @@ void _generateProperty(
   if (property.hasSetter) {
     if (type == null) {
       sb.write('  set $dartName(${t}value) { '
-          '$body = (value is Map || value is Iterable) ? '
-          'new JsObject.jsify(value) : value;}\n');
+          '$body = (value is Map || (value is Iterable && value is! JsArray)) '
+          '? new JsObject.jsify(value) : value;}\n');
     } else if (type == "List") {
       sb.write('  set $dartName(${t}value) { '
-          '$body = (value is! JsArray) ? '
+          '$body = (value != null && value is! JsArray) ? '
           'new JsObject.jsify(value) : value;}\n');
     } else {
       sb.write('  set $dartName(${t}value) { $body = value; }\n');

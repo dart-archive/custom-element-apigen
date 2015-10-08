@@ -15,6 +15,10 @@ class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerBa
   ExampleElement.created() : super.created();
   factory ExampleElement() => new Element.tag('example-element');
 
+  /// A public Array property.
+  List get elementArrayProperty => jsElement[r'elementArrayProperty'];
+  set elementArrayProperty(List value) { jsElement[r'elementArrayProperty'] = (value != null && value is! JsArray) ? new JsObject.jsify(value) : value;}
+
   num get elementNum => jsElement[r'elementNum'];
   set elementNum(num value) { jsElement[r'elementNum'] = value; }
 
@@ -24,7 +28,7 @@ class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerBa
 
   /// A public property created with the properties descriptor.
   get elementPublicProperty => jsElement[r'elementPublicProperty'];
-  set elementPublicProperty(value) { jsElement[r'elementPublicProperty'] = (value is Map || value is Iterable) ? new JsObject.jsify(value) : value;}
+  set elementPublicProperty(value) { jsElement[r'elementPublicProperty'] = (value is Map || (value is Iterable && value is! JsArray)) ? new JsObject.jsify(value) : value;}
 
   /// A read only property.
   num get elementReadOnlyProperty => jsElement[r'elementReadOnlyProperty'];
