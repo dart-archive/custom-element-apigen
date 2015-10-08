@@ -4,3 +4,5 @@ files_to_generate:
   - example_element/example_element.html
   - example_element_with_behavior/example_element_with_behavior.html
   - example_multi_behavior/example_multi_behavior.html
+  - example_multi_deep_behavior/example_multi_deep_behavior.html
+  - example_element_with_deep_behavior/example_element_with_deep_behavior.html

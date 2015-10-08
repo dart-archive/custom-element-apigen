@@ -1,6 +1,7 @@
 ## 0.2.0+2
   * Allow setting list/map properties to null.
   * Don't re-jsify a JsArray in setters.
+  * Add support for deeply nested behaviors.
 
 ## 0.2.0+1
   * Remove `void` return types from all functions, and leave them as dynamic
