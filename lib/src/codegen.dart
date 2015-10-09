@@ -22,8 +22,8 @@ String generateClass(Class classSummary, FileConfig config,
   if (classSummary is Element) {
     baseExtendName = _baseExtendName(classSummary.extendName, elementSummaries);
     sb.write(_generateElementHeader(classSummary.name, comment,
-        classSummary.extendName, baseExtendName, classSummary.mixins
-            .map((String name) => mixinSummaries[name]).toList()));
+        classSummary.extendName, baseExtendName, classSummary.mixins,
+        mixinSummaries));
   } else if (classSummary is Mixin) {
     sb.write(_generateMixinHeader(classSummary, comment, mixinSummaries));
   } else {
@@ -183,6 +183,20 @@ String generateDirectives(String name, List<String> segments,
   var elementName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
 
+  // Given a mixin, adds imports for it and all its recursive dependencies.
+  addMixinImports(String mixinName) {
+    var import = _generateMixinImport(
+        mixinName, config, mixinSummaries, packageLibDir);
+    if (import != null) extraImports.add(import);
+
+    // Add imports for things each mixin `extends`.
+    var mixin = _getMixinOrDie(mixinName, mixinSummaries);
+    if (mixin.additionalMixins == null) return;
+    for (var mixinName in mixin.additionalMixins) {
+      addMixinImports(mixinName);
+    }
+  }
+
   for (var element in summary.elements) {
     var extendName = element.extendName;
     if (extendName != null && extendName.contains('-')) {
@@ -197,32 +211,16 @@ String generateDirectives(String name, List<String> segments,
     }
 
     for (var mixinName in element.mixins) {
-      var import = _generateMixinImport(
-          mixinName, config, mixinSummaries, packageLibDir);
-      if (import != null) extraImports.add(import);
-
-      // Add imports for things each mixin `extends`.
-      var mixin = mixinSummaries[mixinName];
-      if (mixin == null) {
-        throw 'Unable to find mixin $mixinName. Make sure the mixin file is '
-            'loaded. If you don\'t want to generate the mixin as a dart api '
-            'then you can use the `files_to_load` section to load it.';
-      }
-      if (mixin.additionalMixins == null) continue;
-      extraImports.addAll(mixin.additionalMixins
-          .map((m) =>
-              _generateMixinImport(m, config, mixinSummaries, packageLibDir))
-          .where((import) => import != null));
+      addMixinImports(mixinName);
     }
   }
 
   // Add imports for things each mixin `extends`.
   for (var mixin in summary.mixins) {
     if (mixin.additionalMixins == null) continue;
-    extraImports.addAll(mixin.additionalMixins
-        .map((m) =>
-            _generateMixinImport(m, config, mixinSummaries, packageLibDir))
-        .where((import) => import != null));
+    for (var mixinName in mixin.additionalMixins) {
+      addMixinImports(mixinName);
+    }
   }
 
   for (var import in summary.imports) {
@@ -297,13 +295,17 @@ String _generateMixinHeader(Mixin summary, String comment, Map<String, Mixin> mi
   var className = summary.name.split('.').last;
   var additional = new StringBuffer();
   if (summary.extendName != null) additional.write(', ${summary.extendName}');
-  if (summary.additionalMixins != null) {
-    for (String mixinName in summary.additionalMixins) {
-      var mixinSummary = mixinSummaries[mixinName];
-      if (mixinSummary == null) throw 'Unknown Mixin $mixinName';
-      additional.write(', ${mixinSummary.name}');
+
+  addMixins(String mixinName) {
+    var mixin = _getMixinOrDie(mixinName, mixinSummaries);
+    if (mixin.additionalMixins == null) return;
+
+    for (var name in mixin.additionalMixins) {
+      additional.write(', ${name}');
     }
   }
+  addMixins(summary.name);
+
   return '''
 
 $comment
@@ -313,7 +315,8 @@ abstract class $className implements CustomElementProxyMixin$additional {
 }
 
 String _generateElementHeader(String name, String comment, String extendName,
-    String baseExtendName, List<Mixin> mixins) {
+    String baseExtendName, List<String> mixins,
+    Map<String, Mixin> mixinSummaries) {
   var className = _toCamelCase(name);
 
   var extendClassName;
@@ -331,12 +334,20 @@ String _generateElementHeader(String name, String comment, String extendName,
   }
 
   var mixinNames = [];
-  mixins.forEach((Mixin m) {
-    mixinNames.add(m.name);
-    if (m.additionalMixins != null) {
-      mixinNames.addAll(m.additionalMixins);
+
+  addMixinNames(String mixinName) {
+    // Add imports for things each mixin `extends`.
+    var mixin = _getMixinOrDie(mixinName, mixinSummaries);
+    if (mixin.additionalMixins != null) {
+      for (var name in mixin.additionalMixins) {
+        addMixinNames(name);
+      }
     }
-  });
+    mixinNames.add(mixinName);
+  }
+  for (var mixin in mixins) {
+    addMixinNames(mixin);
+  }
 
   var optionalMixinString = mixinNames.isEmpty
       ? ''
@@ -400,8 +411,7 @@ String _toCamelCase(String dashName) => dashName
 
 String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
     String packageLibDir, FileConfig config) {
-  var mixin = mixinSummaries[className];
-  if (mixin == null) throw 'Unknown Mixin $className';
+  var mixin = _getMixinOrDie(className, mixinSummaries);
   var fileSummary = mixin.summary;
   assert(fileSummary != null);
 
@@ -426,6 +436,16 @@ String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
   }
   libPath = libPath.replaceAll('-', '_').replaceFirst('.html', '.dart');
   return '$packageLibDir$libPath';
+}
+
+Mixin _getMixinOrDie(String name, Map<String, Mixin> summaries) {
+  var mixin = summaries[name];
+  if (mixin == null) {
+    throw 'Unable to find mixin $name. Make sure the mixin file is '
+      'loaded. If you don\'t want to generate the mixin as a dart api '
+      'then you can use the `files_to_load` section to load it.';
+  }
+  return mixin;
 }
 
 final _docToDartType = {

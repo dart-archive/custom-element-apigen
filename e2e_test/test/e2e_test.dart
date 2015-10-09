@@ -16,6 +16,8 @@ main() {
     expectFilesCreated('example_element');
     expectFilesCreated('example_element_with_behavior');
     expectFilesCreated('example_multi_behavior');
+    expectFilesCreated('example_multi_deep_behavior');
+    expectFilesCreated('example_element_with_deep_behavior');
   });
 }
 
