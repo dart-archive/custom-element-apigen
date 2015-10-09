@@ -13,7 +13,7 @@ import 'example_behavior.dart';
 
 /// This is an example behavior!
 @BehaviorProxy(const ['Polymer', 'ExampleMultiDeepBehavior'])
-abstract class ExampleMultiDeepBehavior implements CustomElementProxyMixin, ExampleBehavior, ExampleMultiBehavior {
+abstract class ExampleMultiDeepBehavior implements CustomElementProxyMixin, ExampleMultiBehavior {
 
   /// A public property created with the properties descriptor.
   get yetAnotherPublicProperty => jsElement[r'yetAnotherPublicProperty'];

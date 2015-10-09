@@ -301,7 +301,6 @@ String _generateMixinHeader(Mixin summary, String comment, Map<String, Mixin> mi
     if (mixin.additionalMixins == null) return;
 
     for (var name in mixin.additionalMixins) {
-      addMixins(name);
       additional.write(', ${name}');
     }
   }
