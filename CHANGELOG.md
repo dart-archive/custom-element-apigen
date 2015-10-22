@@ -1,3 +1,15 @@
+## 0.2.1
+  * Added `type_overrides` option, which allows you to override types for any
+    fields in a class. This may later be extended to allow you to override the
+    return types and argument types of methods as well, if needed. This should
+    be supplied as an option to a file, and should look like the following:
+    
+      - some_file/some_file.html:
+          type_overrides:
+            SomeClassInMyFile:
+              somePropertyName:
+                type: Number
+
 ## 0.2.0+2
   * Allow setting list/map properties to null.
   * Don't re-jsify a JsArray in setters.

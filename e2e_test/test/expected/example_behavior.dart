@@ -28,6 +28,10 @@ abstract class ExampleBehavior implements CustomElementProxyMixin {
   num get behaviorReadOnlyProperty => jsElement[r'behaviorReadOnlyProperty'];
   set behaviorReadOnlyProperty(num value) { jsElement[r'behaviorReadOnlyProperty'] = value; }
 
+  /// A property whose type will be overridden
+  num get behaviorWrongTypeProperty => jsElement[r'behaviorWrongTypeProperty'];
+  set behaviorWrongTypeProperty(num value) { jsElement[r'behaviorWrongTypeProperty'] = value; }
+
   /// [stringParam]: {string}
   String behaviorFunction(stringParam) =>
       jsElement.callMethod('behaviorFunction', [stringParam]);

@@ -1,7 +1,15 @@
 # Configuration for running tool/generate_dart_api.dart
 files_to_generate:
-  - example_behavior/example_behavior.html
-  - example_element/example_element.html
+  - example_behavior/example_behavior.html:
+      type_overrides:
+        ExampleBehavior:
+          behaviorWrongTypeProperty:
+            type: Number
+  - example_element/example_element.html:
+      type_overrides:
+        ExampleElement:
+          elementWrongTypeProperty:
+            type: Number
   - example_element_with_behavior/example_element_with_behavior.html
   - example_multi_behavior/example_multi_behavior.html
   - example_multi_deep_behavior/example_multi_deep_behavior.html

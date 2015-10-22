@@ -317,7 +317,7 @@ abstract class $className implements CustomElementProxyMixin$additional {
 String _generateElementHeader(String name, String comment, String extendName,
     String baseExtendName, List<String> mixins,
     Map<String, Mixin> mixinSummaries) {
-  var className = _toCamelCase(name);
+  var className = toCamelCase(name);
 
   var extendClassName;
   var hasCustomElementProxyMixin = false;
@@ -330,7 +330,7 @@ String _generateElementHeader(String name, String comment, String extendName,
         'CustomElementProxyMixin, PolymerBase';
     hasCustomElementProxyMixin = true;
   } else {
-    extendClassName = _toCamelCase(extendName);
+    extendClassName = toCamelCase(extendName);
   }
 
   var mixinNames = [];
@@ -374,7 +374,7 @@ class $className extends $extendClassName$optionalMixinString {
 }
 
 String _generateCustomElementProxy(String name, String baseExtendName) {
-  var className = _toCamelCase(name);
+  var className = toCamelCase(name);
   // Only pass the extendsTag if its a native element.
   var maybeExtendsTag = '';
   if (baseExtendName != null && !baseExtendName.contains('-')) {
@@ -404,7 +404,7 @@ String _toComment(String description, [int indent = 0]) {
   return '$s1///$comment';
 }
 
-String _toCamelCase(String dashName) => dashName
+String toCamelCase(String dashName) => dashName
     .split('-')
     .map((e) => '${e[0].toUpperCase()}${e.substring(1)}')
     .join('');
