@@ -34,6 +34,10 @@ class ExampleElement extends HtmlElement with CustomElementProxyMixin, PolymerBa
   num get elementReadOnlyProperty => jsElement[r'elementReadOnlyProperty'];
   set elementReadOnlyProperty(num value) { jsElement[r'elementReadOnlyProperty'] = value; }
 
+  /// A property whose type will be overridden
+  num get elementWrongTypeProperty => jsElement[r'elementWrongTypeProperty'];
+  set elementWrongTypeProperty(num value) { jsElement[r'elementWrongTypeProperty'] = value; }
+
   String elementFunction(String stringParam) =>
       jsElement.callMethod('elementFunction', [stringParam]);
 

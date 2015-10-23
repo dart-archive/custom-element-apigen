@@ -10,6 +10,8 @@
 /// to autogenerate a Dart API for them.
 library custom_element_apigen.src.ast;
 
+import 'codegen.dart' show toCamelCase;
+
 class FileSummary {
   String path;
   List<Import> imports = [];
@@ -103,7 +105,7 @@ abstract class NamedEntry {
   FileSummary summary;
 
   NamedEntry.fromJson(Map jsonNamedEntry)
-      : name = jsonNamedEntry['name'].replaceFirst('Polymer.', ''),
+      : name = jsonNamedEntry['name'],
         description = jsonNamedEntry['description'];
 }
 

@@ -67,6 +67,18 @@ class FileConfig {
   /// classes will end up in the default file.
   final Map<String, List<String>> file_overrides;
 
+  /// Map of type overrides for classes. Should be in this form:
+  ///
+  ///  - example_element/example_element.html:
+  ///      type_overrides:
+  ///        ExampleElement:
+  ///          exampleProperty:
+  ///            type: Number
+  ///
+  /// These are often needed when js types are wrong.
+  final Map<String,
+      Map<String, Map<String, Map<String, String>>>> typeOverrides;
+
   /// Dart import to get the base class of a custom element. This is inferred
   /// normally from the package_mappings, but can be overriden on an individual
   /// file if necessary.
@@ -76,7 +88,8 @@ class FileConfig {
       : nameSubstitutions = map != null ? map['name_substitutions'] : null,
         omitImports = map != null ? map['omit_imports'] : null,
         extendsImport = map != null ? map['extends_import'] : null,
-        file_overrides = map != null ? map['file_overrides'] : null;
+        file_overrides = map != null ? map['file_overrides'] : null,
+        typeOverrides = map != null ? map['type_overrides'] : null;
 }
 
 /// Parse configurations from a `.yaml` configuration file.

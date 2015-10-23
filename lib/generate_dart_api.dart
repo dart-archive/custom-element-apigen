@@ -57,7 +57,7 @@ Future generateWrappers(GlobalConfig config,
   // [fileSummaries], [elementSummaries], and [mixinSummaries].
   Future parseFile(String path, int totalLength) async {
     _progress('${++i} of $totalLength: $path');
-    var summary = await _parseFile(path);
+    var summary = await _parseFile(path, config);
     fileSummaries.add(summary);
     for (var elementSummary in summary.elements) {
       elementSummary.summary = summary;
@@ -146,7 +146,7 @@ void _generateImportStub(
 
 /// Reads the contents of [inputPath], parses the documentation, and then
 /// generates a FileSummary for it.
-Future<FileSummary> _parseFile(String inputPath,
+Future<FileSummary> _parseFile(String inputPath, GlobalConfig globalConfig,
     {bool ignoreFileErrors: false}) async {
   var results = await Process.run(
       'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
@@ -160,7 +160,46 @@ Future<FileSummary> _parseFile(String inputPath,
     _parseError(results);
   }
 
+  // Apply type_overrides early on!
+  _applyTypeOverrides(inputPath, jsonFileSummary, globalConfig);
+
   return new FileSummary.fromJson(jsonFileSummary);
+}
+
+void _applyTypeOverrides(
+    String inputPath, Map jsonFileSummary, GlobalConfig globalConfig) {
+  // Get the file config matching inputPath, and bail if it has no overrides.
+  var fileConfig = globalConfig.files.firstWhere(
+      (file) => platformIndependentPath(file.inputPath) == inputPath,
+      orElse: () => null);
+  if (fileConfig == null || fileConfig.typeOverrides == null) return;
+
+  // Apply each type override to the jsonFileSummary.
+  fileConfig.typeOverrides.forEach((String className, Map details) {
+    // Find the summary for the class, it could be either an element or a
+    // behavior.
+    var jsonClass = jsonFileSummary['elements'].firstWhere(
+        (Map element) => toCamelCase(element['name']) == className,
+        orElse: () => null);
+    if (jsonClass == null) {
+      jsonClass = jsonFileSummary['behaviors'].firstWhere(
+          (Map behavior) => toCamelCase(behavior['name']) == className,
+          orElse: () => null);
+    }
+    if (jsonClass == null) {
+      throw 'Unable to find class $className in file at $inputPath';
+    }
+
+    // Apply the type overrides for each named property.
+    details.forEach((String propertyName, Map propertyDetail) {
+      var jsonProperty = jsonClass['properties'].firstWhere(
+          (Map property) => property['name'] == propertyName, orElse: () {
+        throw 'unable to find property $propertyName in class $className';
+      });
+
+      jsonProperty['type'] = propertyDetail['type'];
+    });
+  });
 }
 
 _parseError(ProcessResult results) {
@@ -179,9 +218,13 @@ stdout: ${results.stdout}
 ///
 /// If [fileName] is supplied then that will be used as the prefix for all
 /// output files.
-void _generateDartApi(FileSummary summary,
-    Map<String, Element> elementSummaries, Map<String, Mixin> mixinSummaries,
-    String inputPath, FileConfig config, String filePath,
+void _generateDartApi(
+    FileSummary summary,
+    Map<String, Element> elementSummaries,
+    Map<String, Mixin> mixinSummaries,
+    String inputPath,
+    FileConfig config,
+    String filePath,
     FileFactory createFile) {
   _progressLineBroken = false;
   var segments = path.split(inputPath);
