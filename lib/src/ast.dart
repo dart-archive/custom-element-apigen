@@ -23,11 +23,11 @@ class FileSummary {
   FileSummary.fromJson(Map jsonSummary) {
     imports = jsonSummary['imports'].map((path) => new Import(path)).toList();
 
-    for (Map element in jsonSummary['elements']) {
+    for (Map element in jsonSummary['elements'].values) {
       elementsMap[element['name']] = new Element.fromJson(element);
     }
 
-    for (Map mixinMap in jsonSummary['behaviors']) {
+    for (Map mixinMap in jsonSummary['behaviors'].values) {
       var mixin = new Mixin.fromJson(mixinMap);
       mixinsMap[mixin.name] = mixin;
     }
@@ -137,11 +137,11 @@ class Class extends NamedEntry {
   Class.fromJson(Map jsonClass) : super.fromJson(jsonClass) {
     extendName = jsonClass['extendsName'];
 
-    for (Map property in jsonClass['properties']) {
+    for (Map property in jsonClass['properties'].values) {
       properties[property['name']] = new Property.fromJson(property);
     }
 
-    for (Map method in jsonClass['methods']) {
+    for (Map method in jsonClass['methods'].values) {
       methods.add(new Method.fromJson(method));
     }
   }

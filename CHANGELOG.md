@@ -1,3 +1,8 @@
+## 0.2.1+1
+  * Make sure we handle duplicate behavior/element names that come back from the
+    `hydrolysis` tool. This happens when there is an `Impl` class and a public
+    class by the same name.
+
 ## 0.2.1
   * Added `type_overrides` option, which allows you to override types for any
     fields in a class. This may later be extended to allow you to override the

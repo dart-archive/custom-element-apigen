@@ -178,13 +178,9 @@ void _applyTypeOverrides(
   fileConfig.typeOverrides.forEach((String className, Map details) {
     // Find the summary for the class, it could be either an element or a
     // behavior.
-    var jsonClass = jsonFileSummary['elements'].firstWhere(
-        (Map element) => toCamelCase(element['name']) == className,
-        orElse: () => null);
+    var jsonClass = jsonFileSummary['elements'][className];
     if (jsonClass == null) {
-      jsonClass = jsonFileSummary['behaviors'].firstWhere(
-          (Map behavior) => toCamelCase(behavior['name']) == className,
-          orElse: () => null);
+      jsonClass = jsonFileSummary['behaviors'][className];
     }
     if (jsonClass == null) {
       throw 'Unable to find class $className in file at $inputPath';
@@ -192,10 +188,10 @@ void _applyTypeOverrides(
 
     // Apply the type overrides for each named property.
     details.forEach((String propertyName, Map propertyDetail) {
-      var jsonProperty = jsonClass['properties'].firstWhere(
-          (Map property) => property['name'] == propertyName, orElse: () {
+      var jsonProperty = jsonClass['properties'][propertyName];
+      if (jsonProperty == null) {
         throw 'unable to find property $propertyName in class $className';
-      });
+      }
 
       jsonProperty['type'] = propertyDetail['type'];
     });
