@@ -63,6 +63,9 @@ class FileConfig {
   /// corresponding Dart type.
   final List<String> omitImports;
 
+  /// extra imports
+  final List<String> extraImports;
+
   /// Map of file names to classes that should live within them. All other
   /// classes will end up in the default file.
   final Map<String, List<String>> file_overrides;
@@ -87,6 +90,7 @@ class FileConfig {
   FileConfig(this.global, this.inputPath, [Map map])
       : nameSubstitutions = map != null ? map['name_substitutions'] : null,
         omitImports = map != null ? map['omit_imports'] : null,
+        extraImports = map != null ? map['extra_imports'] : null,
         extendsImport = map != null ? map['extends_import'] : null,
         file_overrides = map != null ? map['file_overrides'] : null,
         typeOverrides = map != null ? map['type_overrides'] : null;

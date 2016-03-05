@@ -182,6 +182,11 @@ String generateDirectives(String name, List<String> segments,
       .withoutExtension(segments.map((s) => s.replaceAll('-', '_')).join('.'));
   var elementName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
+  if (config.extraImports!=null) {
+    config.extraImports.forEach((pkg) {
+      extraImports.add("import '$pkg';");
+    });
+  }
 
   // Given a mixin, adds imports for it and all its recursive dependencies.
   addMixinImports(String mixinName) {
