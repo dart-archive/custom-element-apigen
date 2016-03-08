@@ -1,4 +1,14 @@
-## 0.2.1+1
+## 0.2.2
+
+  * Added a new option to add extra imports on the dart side. Usefull when
+    the generated import is wrong and you need to omit it and replace with
+    the right one:
+
+      - some_file/some_file.html:
+         extra_imports:
+          - package:polymer_elements/iron_resizable_behavior.dart
+         
+# 0.2.1+1
   * Make sure we handle duplicate behavior/element names that come back from the
     `hydrolysis` tool. This happens when there is an `Impl` class and a public
     class by the same name.
