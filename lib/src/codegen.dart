@@ -437,7 +437,7 @@ String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
   if (parts.length == 4) {
     libPath = parts.last;
   } else {
-    libPath = path.join(parts.getRange(2, parts.length));
+    libPath = path.joinAll(parts.getRange(2, parts.length));
   }
   libPath = libPath.replaceAll('-', '_').replaceFirst('.html', '.dart');
   return '$packageLibDir$libPath';
