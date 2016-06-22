@@ -1,3 +1,7 @@
+## 0.2.2+1
+  
+  * Update for `path` API changes 
+
 ## 0.2.2
 
   * Added a new option to add extra imports on the dart side. Usefull when
