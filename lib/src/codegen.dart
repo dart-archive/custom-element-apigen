@@ -31,12 +31,26 @@ String generateClass(Class classSummary, FileConfig config,
   }
 
   var getDartName = _substituteFunction(config.nameSubstitutions);
+
+  Map<String,dynamic> classOverrides = config.overrides!=null?config.overrides[classSummary.name]:null;
+  _PropertyGenerator generateProperty = _propertyGenerator(classOverrides);
   classSummary.properties.values
-      .forEach((p) => _generateProperty(p, sb, getDartName));
-  classSummary.methods.forEach((m) => _generateMethod(m, sb, getDartName));
+      .forEach((p) => generateProperty(p, sb, getDartName));
+
+
+  _MethodGenerator generateMethod = _methodGenerator(classOverrides);
+  classSummary.methods.forEach((m) => generateMethod(m, sb, getDartName));
+
   sb.write('}\n');
   return sb.toString();
 }
+
+typedef void _PropertyGenerator(
+    Property property, StringBuffer sb, String getDartName(String));
+
+typedef void _MethodGenerator(
+    Method method, StringBuffer sb, String getDartName(String));
+
 
 String _baseExtendName(String extendName, Map<String, Element> allElements) {
   if (extendName == null || extendName.isEmpty) return null;
@@ -49,6 +63,57 @@ String _baseExtendName(String extendName, Map<String, Element> allElements) {
     baseExtendElement = allElements[baseExtendName];
   }
   return baseExtendName;
+}
+
+_PropertyGenerator _propertyGenerator(Map<String,dynamic> classOverrides) {
+  if (classOverrides==null) {
+    return _generateProperty;
+  }
+
+  // Override
+  return (Property property, StringBuffer sb, String getDartName(String)) {
+    var propOverrides= classOverrides[property.name];
+    if (propOverrides == null) {
+      _generateProperty(property,sb,getDartName);
+    } else if (propOverrides is Map) {
+      if (propOverrides.containsKey('get')) {
+        sb.writeln();
+        _writeLines(sb,propOverrides['get']);
+      }
+      if (propOverrides.containsKey('set')) {
+        sb.writeln();
+        _writeLines(sb,propOverrides['set']);
+      }
+    } else {
+      sb.writeln();
+      _writeLines(sb,propOverrides);
+    }
+  };
+}
+
+_writeLines(StringBuffer sb,x) {
+  if (x is  List) {
+    x.forEach((String line) => sb.writeln(line));
+  } else {
+    sb.writeln(x);
+  }
+}
+
+
+_MethodGenerator _methodGenerator(Map<String,dynamic> classOverrides) {
+  if(classOverrides==null) {
+    return _generateMethod;
+  }
+
+  return (Method method, StringBuffer sb, String getDartName(String)) {
+    var metOverrides= classOverrides[method.name];
+    if (metOverrides ==null) {
+      _generateMethod(method,sb,getDartName);
+    } else {
+      sb.writeln();
+      _writeLines(sb,metOverrides);
+    }
+  };
 }
 
 Function _substituteFunction(Map<String, String> nameSubstitutions) {

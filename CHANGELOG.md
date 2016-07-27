@@ -1,3 +1,6 @@
+## 0.2.3
+  * Added an "overrides" option to completely overrides code generation
+
 ## 0.2.2+1
   
   * Update for `path` API changes 

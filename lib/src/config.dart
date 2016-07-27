@@ -82,6 +82,26 @@ class FileConfig {
   final Map<String,
       Map<String, Map<String, Map<String, String>>>> typeOverrides;
 
+  /// Map of overrides for classes. Should be in this form:
+  ///
+  ///  - example_element/example_element.html:
+  ///      overrides:
+  ///        ExampleElement:
+  ///          propertyName:
+  ///           get: "get propertyName => <... code for getter ...>"
+  ///           set: "set propertyName(v) => <... code for setter ...>"
+  ///
+  ///          methodName: "methodName() => <... code for method ..>"
+  ///
+  ///          anotherPropertyName: "anotherPropertyName() => <... want to treat it as a method instead ...>"
+  ///
+  ///
+  ///
+  /// These are often needed when a custom translation for a property or a method should be used instead of the
+  /// automatically generated one.
+  final Map<String,
+      Map<String, Map<String, Map<String, dynamic>>>> overrides;
+
   /// Dart import to get the base class of a custom element. This is inferred
   /// normally from the package_mappings, but can be overriden on an individual
   /// file if necessary.
@@ -93,7 +113,8 @@ class FileConfig {
         extraImports = map != null ? map['extra_imports'] : null,
         extendsImport = map != null ? map['extends_import'] : null,
         file_overrides = map != null ? map['file_overrides'] : null,
-        typeOverrides = map != null ? map['type_overrides'] : null;
+        typeOverrides = map != null ? map['type_overrides'] : null,
+        overrides = map != null ? map['overrides'] : null;
 }
 
 /// Parse configurations from a `.yaml` configuration file.
