@@ -39,15 +39,15 @@ class ExampleElementWithOverrides extends HtmlElement with CustomElementProxyMix
   set elementWrongTypeProperty(String value) { jsElement[r'elementWrongTypeProperty'] = value; }
 
   /// get the custom object
-  get myCustomMapping => toDart(jsElement['myCustomMapping']);
-  toDart(x) {
+  get myCustomMapping => _toDart(jsElement['myCustomMapping']);
+  _toDart(x) {
     // Some code that will map x to the proper type
     return x;
   }
 
   /// set the custom object
-  set myCustomMapping(v) => jsElement['myCustomMapping']=toJs(v);
-  toJs(x) {
+  set myCustomMapping(v) => jsElement['myCustomMapping']=_toJs(v);
+  _toJs(x) {
     // Some code that will create the proper js rappresentation of x
     return new JsObject.jsify(x);
   }
