@@ -88,17 +88,17 @@ class FileConfig {
   ///      overrides:
   ///        ExampleElement:
   ///          propertyName:
-  ///           get: "get propertyName => <... code for getter ...>"
-  ///           set: "set propertyName(v) => <... code for setter ...>"
-  ///
-  ///          methodName: "methodName() => <... code for method ..>"
-  ///
-  ///          anotherPropertyName: "anotherPropertyName() => <... want to treat it as a method instead ...>"
-  ///
-  ///
+  ///           get:
+  ///            - "get propertyName => <... code for getter ...>"
+  ///           set:
+  ///            - "set propertyName(v) => <... code for setter ...>"
+  ///          methodName:
+  ///           - "methodName() => <... code for method ..>"
+  ///          anotherPropertyName:
+  ///           - "anotherPropertyName() => <... want to treat it as a method instead ...>"
   ///
   /// These are often needed when a custom translation for a property or a method should be used instead of the
-  /// automatically generated one.
+  /// default one.
   final Map<String,
       Map<String, Map<String, Map<String, dynamic>>>> overrides;
 
