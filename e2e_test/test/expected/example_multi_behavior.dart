@@ -12,11 +12,16 @@ import 'example_behavior.dart';
 
 /// This is an example behavior!
 @BehaviorProxy(const ['Polymer', 'ExampleMultiBehavior'])
-abstract class ExampleMultiBehavior implements CustomElementProxyMixin, ExampleBehavior {
-
+abstract class ExampleMultiBehavior
+    implements CustomElementProxyMixin, ExampleBehavior {
   /// A public property created with the properties descriptor.
   get anotherPublicProperty => jsElement[r'anotherPublicProperty'];
-  set anotherPublicProperty(value) { jsElement[r'anotherPublicProperty'] = (value is Map || (value is Iterable && value is! JsArray)) ? new JsObject.jsify(value) : value;}
+  set anotherPublicProperty(value) {
+    jsElement[r'anotherPublicProperty'] =
+        (value is Map || (value is Iterable && value is! JsArray))
+            ? new JsObject.jsify(value)
+            : value;
+  }
 
   /// [stringParam]: {string}
   String anotherBehaviorFunction(stringParam) =>

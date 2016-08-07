@@ -280,9 +280,7 @@ class Argument extends TypedEntry {
 
   void _prettyPrint(StringBuffer sb) {
     if (type != null) {
-      sb
-        ..write(type)
-        ..write(' ');
+      sb..write(type)..write(' ');
     }
     sb.write(name);
   }

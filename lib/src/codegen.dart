@@ -14,13 +14,20 @@ import 'html_element_names.dart';
 import 'config.dart';
 import 'ast.dart';
 
-String generateClass(Class classSummary, FileConfig config, Map<String, Element> elementSummaries, Map<String, Mixin> mixinSummaries) {
+String generateClass(Class classSummary, FileConfig config,
+    Map<String, Element> elementSummaries, Map<String, Mixin> mixinSummaries) {
   var sb = new StringBuffer();
   var comment = _toComment(classSummary.description);
   var baseExtendName;
   if (classSummary is Element) {
     baseExtendName = _baseExtendName(classSummary.extendName, elementSummaries);
-    sb.write(_generateElementHeader(classSummary.name, comment, classSummary.extendName, baseExtendName, classSummary.mixins, mixinSummaries));
+    sb.write(_generateElementHeader(
+        classSummary.name,
+        comment,
+        classSummary.extendName,
+        baseExtendName,
+        classSummary.mixins,
+        mixinSummaries));
   } else if (classSummary is Mixin) {
     sb.write(_generateMixinHeader(classSummary, comment, mixinSummaries));
   } else {
@@ -29,9 +36,12 @@ String generateClass(Class classSummary, FileConfig config, Map<String, Element>
 
   var getDartName = _substituteFunction(config.nameSubstitutions);
 
-  Map<String, dynamic> classOverrides = config.overrides != null ? config.overrides[toCamelCase(classSummary.name)] : null;
+  Map<String, dynamic> classOverrides = config.overrides != null
+      ? config.overrides[toCamelCase(classSummary.name)]
+      : null;
   _PropertyGenerator generateProperty = _propertyGenerator(classOverrides);
-  classSummary.properties.values.forEach((p) => generateProperty(p, sb, getDartName));
+  classSummary.properties.values
+      .forEach((p) => generateProperty(p, sb, getDartName));
 
   _MethodGenerator generateMethod = _methodGenerator(classOverrides);
   classSummary.methods.forEach((m) => generateMethod(m, sb, getDartName));
@@ -40,15 +50,19 @@ String generateClass(Class classSummary, FileConfig config, Map<String, Element>
   return sb.toString();
 }
 
-typedef void _PropertyGenerator(Property property, StringBuffer sb, String getDartName(String));
+typedef void _PropertyGenerator(
+    Property property, StringBuffer sb, String getDartName(String));
 
-typedef void _MethodGenerator(Method method, StringBuffer sb, String getDartName(String));
+typedef void _MethodGenerator(
+    Method method, StringBuffer sb, String getDartName(String));
 
 String _baseExtendName(String extendName, Map<String, Element> allElements) {
   if (extendName == null || extendName.isEmpty) return null;
   var baseExtendName = extendName;
   var baseExtendElement = allElements[baseExtendName];
-  while (baseExtendElement != null && baseExtendElement.extendName != null && !baseExtendElement.extendName.isEmpty) {
+  while (baseExtendElement != null &&
+      baseExtendElement.extendName != null &&
+      !baseExtendElement.extendName.isEmpty) {
     baseExtendName = baseExtendElement.extendName;
     baseExtendElement = allElements[baseExtendName];
   }
@@ -82,7 +96,7 @@ _writeLines(StringBuffer sb, x) {
   sb.writeln();
   if (x is List<String>) {
     x.forEach((String line) => sb.writeln("  ${line}"));
-  }  else {
+  } else {
     throw "Overrides values should be a list of lines";
   }
 }
@@ -108,9 +122,15 @@ Function _substituteFunction(Map<String, String> nameSubstitutions) {
   };
 }
 
-const _propertiesToSkip = const ['properties', 'listeners', 'observers', 'hostAttributes'];
+const _propertiesToSkip = const [
+  'properties',
+  'listeners',
+  'observers',
+  'hostAttributes'
+];
 
-void _generateProperty(Property property, StringBuffer sb, String getDartName(String)) {
+void _generateProperty(
+    Property property, StringBuffer sb, String getDartName(String)) {
   // Don't add these to the generated classes, they are not meant to be called
   // directly.
   if (_propertiesToSkip.contains(property.name)) return;
@@ -147,9 +167,16 @@ void _generateProperty(Property property, StringBuffer sb, String getDartName(St
   }
 }
 
-const _methodsToSkip = const ['created', 'attached', 'detached', 'ready', 'attributeChanged'];
+const _methodsToSkip = const [
+  'created',
+  'attached',
+  'detached',
+  'ready',
+  'attributeChanged'
+];
 
-void _generateMethod(Method method, StringBuffer sb, String getDartName(String)) {
+void _generateMethod(
+    Method method, StringBuffer sb, String getDartName(String)) {
   // Don't add these to the generated classes, they are not meant to be called
   // directly.
   if (_methodsToSkip.contains(method.name)) return;
@@ -163,7 +190,8 @@ void _generateMethod(Method method, StringBuffer sb, String getDartName(String))
     _generateArgComment(arg, sb);
   }
   sb.write('  ');
-  var type = method.type != null ? _docToDartType[method.type.toLowerCase()] : null;
+  var type =
+      method.type != null ? _docToDartType[method.type.toLowerCase()] : null;
   if (type != null) {
     sb.write('$type ');
   }
@@ -187,7 +215,8 @@ void _generateMethod(Method method, StringBuffer sb, String getDartName(String))
 }
 
 // Returns whether it found any args or not.
-void _generateArgList(List<Argument> args, StringBuffer dartArgList, StringBuffer jsArgList) {
+void _generateArgList(
+    List<Argument> args, StringBuffer dartArgList, StringBuffer jsArgList) {
   bool first = true;
   for (var arg in args) {
     if (!first) {
@@ -207,8 +236,15 @@ void _generateArgList(List<Argument> args, StringBuffer dartArgList, StringBuffe
   }
 }
 
-String generateDirectives(String name, List<String> segments, FileSummary summary, FileConfig config, String packageLibDir, Map<String, Mixin> mixinSummaries) {
-  var libName = path.withoutExtension(segments.map((s) => s.replaceAll('-', '_')).join('.'));
+String generateDirectives(
+    String name,
+    List<String> segments,
+    FileSummary summary,
+    FileConfig config,
+    String packageLibDir,
+    Map<String, Mixin> mixinSummaries) {
+  var libName = path
+      .withoutExtension(segments.map((s) => s.replaceAll('-', '_')).join('.'));
   var elementName = name.replaceAll('-', '_');
   var extraImports = new Set<String>();
   if (config.extraImports != null) {
@@ -219,7 +255,8 @@ String generateDirectives(String name, List<String> segments, FileSummary summar
 
   // Given a mixin, adds imports for it and all its recursive dependencies.
   addMixinImports(String mixinName) {
-    var import = _generateMixinImport(mixinName, config, mixinSummaries, packageLibDir);
+    var import =
+        _generateMixinImport(mixinName, config, mixinSummaries, packageLibDir);
     if (import != null) extraImports.add(import);
 
     // Add imports for things each mixin `extends`.
@@ -237,7 +274,8 @@ String generateDirectives(String name, List<String> segments, FileSummary summar
       if (extendsImport == null) {
         var packageName = config.global.findPackageNameForElement(extendName);
         var fileName = '${extendName.replaceAll('-', '_')}.dart';
-        extendsImport = packageName != null ? 'package:$packageName/$fileName' : fileName;
+        extendsImport =
+            packageName != null ? 'package:$packageName/$fileName' : fileName;
       }
       extraImports.add("import '$extendsImport';");
     }
@@ -256,7 +294,8 @@ String generateDirectives(String name, List<String> segments, FileSummary summar
   }
 
   for (var import in summary.imports) {
-    var htmlImport = getImportPath(import, config, segments, packageLibDir, isDartFile: true);
+    var htmlImport = getImportPath(import, config, segments, packageLibDir,
+        isDartFile: true);
     if (htmlImport == null) continue;
     var dartImport = '${path.withoutExtension(htmlImport)}.dart';
     extraImports.add("import '$dartImport';");
@@ -280,7 +319,9 @@ import 'package:polymer_interop/polymer_interop.dart';
   return output.toString();
 }
 
-String getImportPath(Import import, FileConfig config, List<String> segments, String packageLibDir, {bool isDartFile: false}) {
+String getImportPath(Import import, FileConfig config, List<String> segments,
+    String packageLibDir,
+    {bool isDartFile: false}) {
   var importPath = import.importPath;
   if (importPath == null || importPath.contains('polymer.html')) return null;
   var omit = config.omitImports;
@@ -305,7 +346,8 @@ String getImportPath(Import import, FileConfig config, List<String> segments, St
     if (isDartFile) {
       dartImport = 'package:$packageName/$dartImport';
     } else {
-      dartImport = path.join('..', '..', packageLibDir, 'packages', packageName, dartImport);
+      dartImport = path.join(
+          '..', '..', packageLibDir, 'packages', packageName, dartImport);
     }
   } else {
     dartImport = path.join(packageLibDir, dartImport);
@@ -313,13 +355,15 @@ String getImportPath(Import import, FileConfig config, List<String> segments, St
   return dartImport;
 }
 
-String _generateMixinImport(String name, FileConfig config, Map<String, Mixin> mixinSummaries, String packageLibDir) {
+String _generateMixinImport(String name, FileConfig config,
+    Map<String, Mixin> mixinSummaries, String packageLibDir) {
   var filePath = _mixinImportPath(name, mixinSummaries, packageLibDir, config);
   if (filePath == null) return null;
   return "import '$filePath';";
 }
 
-String _generateMixinHeader(Mixin summary, String comment, Map<String, Mixin> mixinSummaries) {
+String _generateMixinHeader(
+    Mixin summary, String comment, Map<String, Mixin> mixinSummaries) {
   var className = summary.name.split('.').last;
   var additional = new StringBuffer();
   if (summary.extendName != null) additional.write(', ${summary.extendName}');
@@ -342,7 +386,13 @@ abstract class $className implements CustomElementProxyMixin$additional {
 ''';
 }
 
-String _generateElementHeader(String name, String comment, String extendName, String baseExtendName, List<String> mixins, Map<String, Mixin> mixinSummaries) {
+String _generateElementHeader(
+    String name,
+    String comment,
+    String extendName,
+    String baseExtendName,
+    List<String> mixins,
+    Map<String, Mixin> mixinSummaries) {
   var className = toCamelCase(name);
 
   var extendClassName;
@@ -429,9 +479,13 @@ String _toComment(String description, [int indent = 0]) {
   return '$s1///$comment';
 }
 
-String toCamelCase(String dashName) => dashName.split('-').map((e) => '${e[0].toUpperCase()}${e.substring(1)}').join('');
+String toCamelCase(String dashName) => dashName
+    .split('-')
+    .map((e) => '${e[0].toUpperCase()}${e.substring(1)}')
+    .join('');
 
-String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries, String packageLibDir, FileConfig config) {
+String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries,
+    String packageLibDir, FileConfig config) {
   var mixin = _getMixinOrDie(className, mixinSummaries);
   var fileSummary = mixin.summary;
   assert(fileSummary != null);
@@ -445,7 +499,9 @@ String _mixinImportPath(String className, Map<String, Mixin> mixinSummaries, Str
   var parts = path.split(fileSummary.path);
   // Check for `packages` imports.
   if (parts[0] == 'packages') {
-    return fileSummary.path.replaceFirst('packages/', 'package:').replaceFirst('.html', '.dart');
+    return fileSummary.path
+        .replaceFirst('packages/', 'package:')
+        .replaceFirst('.html', '.dart');
   }
 
   var libPath;

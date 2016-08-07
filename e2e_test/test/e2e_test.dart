@@ -30,8 +30,10 @@ void expectFilesCreated(String name) {
   expectContainsFile('lib/$name.html');
   expectContainsFile('lib/${name}_nodart.html');
   expectContainsFile('lib/$name.dart');
-  expect(MockFile.createdFiles
-          .firstWhere((f) => f.path == 'lib/$name.dart').contents,
+  expect(
+      MockFile.createdFiles
+          .firstWhere((f) => f.path == 'lib/$name.dart')
+          .contents,
       readExpected(name));
 }
 

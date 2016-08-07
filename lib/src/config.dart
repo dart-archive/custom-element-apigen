@@ -79,8 +79,8 @@ class FileConfig {
   ///            type: Number
   ///
   /// These are often needed when js types are wrong.
-  final Map<String,
-      Map<String, Map<String, Map<String, String>>>> typeOverrides;
+  final Map<String, Map<String, Map<String, Map<String, String>>>>
+      typeOverrides;
 
   /// Map of overrides for classes. Should be in this form:
   ///
@@ -99,8 +99,7 @@ class FileConfig {
   ///
   /// These are often needed when a custom translation for a property or a method should be used instead of the
   /// default one.
-  final Map<String,
-      Map<String, Map<String, Map<String, dynamic>>>> overrides;
+  final Map<String, Map<String, Map<String, Map<String, dynamic>>>> overrides;
 
   /// Dart import to get the base class of a custom element. This is inferred
   /// normally from the package_mappings, but can be overriden on an individual

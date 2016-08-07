@@ -14,8 +14,10 @@ class MockFile implements File {
     createdFiles.add(this);
   }
 
-  void writeAsStringSync(String contents, {FileMode mode: FileMode.WRITE,
-      Encoding encoding: UTF8, bool flush: false}) {
+  void writeAsStringSync(String contents,
+      {FileMode mode: FileMode.WRITE,
+      Encoding encoding: UTF8,
+      bool flush: false}) {
     this.contents += contents;
   }
 
