@@ -14,14 +14,7 @@ import 'example_behavior.dart';
 
 /// An example element with a behavior with deep dependencies.
 @CustomElementProxy('example-element-with-deep-behavior')
-class ExampleElementWithDeepBehavior extends HtmlElement
-    with
-        CustomElementProxyMixin,
-        PolymerBase,
-        ExampleBehavior,
-        ExampleMultiBehavior,
-        ExampleMultiDeepBehavior {
+class ExampleElementWithDeepBehavior extends HtmlElement with CustomElementProxyMixin, PolymerBase, ExampleBehavior, ExampleMultiBehavior, ExampleMultiDeepBehavior {
   ExampleElementWithDeepBehavior.created() : super.created();
-  factory ExampleElementWithDeepBehavior() =>
-      new Element.tag('example-element-with-deep-behavior');
+  factory ExampleElementWithDeepBehavior() => new Element.tag('example-element-with-deep-behavior');
 }
