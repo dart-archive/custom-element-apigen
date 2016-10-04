@@ -12,6 +12,6 @@ dependencies:
   # the generated code. We could make the codegen ensure that it is listed in
   # the package pubspec instead.
   polymer_interop: ">=0.1.0+2 <0.2.0"
-  web_components: ">=0.11.2 <0.12.3"
+  web_components: ">=0.11.2 <0.13.0"
 environment:
   sdk: '>=1.6.0 <2.0.0'
