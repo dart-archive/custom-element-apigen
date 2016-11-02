@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-node packages/custom_element_apigen/src/js/analyze.js $*
+X=$PWD
+cd `dirname $0`
+Y=$PWD
+cd $X
+
+node $Y/analyze.js $*

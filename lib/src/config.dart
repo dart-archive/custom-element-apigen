@@ -8,9 +8,12 @@
 /// Helper to parse code generation configurations from a file.
 library custom_element_apigen.src.config;
 
+import 'dart:async';
 import 'dart:io';
+import 'package:package_resolver/package_resolver.dart';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
+import 'dart:convert' as convert;
 
 /// Holds the entire information parsed from the command line arguments and
 /// configuration files.
@@ -21,6 +24,7 @@ class GlobalConfig {
   final List<RegExp> deletionPatterns = [];
   final List<String> filesToLoad = [];
   String currentPackage;
+  PackageResolver packageResolver;
   int _lastUpdated = 0;
 
   /// Retrieve the package name associated with [elementName].
@@ -117,7 +121,7 @@ class FileConfig {
 }
 
 /// Parse configurations from a `.yaml` configuration file.
-void parseConfigFile(String filePath, GlobalConfig config) {
+Future parseConfigFile(String filePath, GlobalConfig config) async {
   if (!new File(filePath).existsSync()) {
     print("error: file $filePath doesn't exist");
     exit(1);
@@ -127,7 +131,7 @@ void parseConfigFile(String filePath, GlobalConfig config) {
   _parseFilesToGenerate(yaml, config);
   _parseStubsToGenerate(yaml, config);
   _parseDeletionPatterns(yaml, config);
-  _parseFilesToLoad(yaml, config);
+  await _parseFilesToLoad(yaml, config);
 
   if (!new File('pubspec.yaml').existsSync()) {
     print("error: file 'pubspec.yaml' doesn't exist");
@@ -196,20 +200,24 @@ void _parseDeletionPatterns(yaml, GlobalConfig config) {
       .addAll((patterns as YamlList).map((pattern) => new RegExp(pattern)));
 }
 
-void _parseFilesToLoad(yaml, GlobalConfig config) {
+// TODO : USE package resolver to resolve these
+Future _parseFilesToLoad(yaml, GlobalConfig config) async {
   var filePaths = _parseStringList(yaml, 'files_to_load');
   if (filePaths == null) return;
-  config.filesToLoad.addAll(filePaths.map((filePath) {
+  config.filesToLoad.addAll(await Future.wait(filePaths.map((filePath) async {
     var parts = filePath.split(':');
     if (parts.length == 1) {
       return platformIndependentPath(parts[0]);
     } else if (parts.length == 2 && parts[0] == 'package') {
-      return path.join('packages', platformIndependentPath(parts[1]));
+      Uri uri = await config.packageResolver.resolveUri(filePath);
+      String p = platformIndependentPath(uri.toFilePath());
+      p = p.replaceAll("%", r'%25'); // Reset url encoding
+      return p;
     } else {
       throw 'Unrecognized path `$filePath`. Should be a relative uri or a '
           '`package:` style uri.';
     }
-  }));
+  })));
 }
 
 String platformIndependentPath(String originalPath) =>

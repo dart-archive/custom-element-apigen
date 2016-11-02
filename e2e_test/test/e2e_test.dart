@@ -31,10 +31,15 @@ void expectFilesCreated(String name) {
   expectContainsFile('lib/${name}_nodart.html');
   expectContainsFile('lib/$name.dart');
   expect(
-      MockFile.createdFiles
+      _('expected/${name}.dart',MockFile.createdFiles
           .firstWhere((f) => f.path == 'lib/$name.dart')
-          .contents,
+          .contents),
       readExpected(name));
+}
+
+_(fn,x) {
+	new File(fn).writeAsString(x);
+ return x;
 }
 
 String readExpected(String name) =>
