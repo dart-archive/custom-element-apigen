@@ -200,7 +200,6 @@ void _parseDeletionPatterns(yaml, GlobalConfig config) {
       .addAll((patterns as YamlList).map((pattern) => new RegExp(pattern)));
 }
 
-// TODO : USE package resolver to resolve these
 Future _parseFilesToLoad(yaml, GlobalConfig config) async {
   var filePaths = _parseStringList(yaml, 'files_to_load');
   if (filePaths == null) return;
