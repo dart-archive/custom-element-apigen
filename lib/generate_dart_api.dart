@@ -152,7 +152,9 @@ void _generateImportStub(
 /// generates a FileSummary for it.
 Future<FileSummary> _parseFile(String inputPath, GlobalConfig globalConfig,
     {bool ignoreFileErrors: false}) async {
-  String scriptPath = (await globalConfig.packageResolver.resolveUri("package:custom_element_apigen/src/js/process_elements.sh")).toFilePath();
+  String scriptPath = (await globalConfig.packageResolver.resolveUri(
+          "package:custom_element_apigen/src/js/process_elements.sh"))
+      .toFilePath();
 
   //inputPath = path.absolute(inputPath);
   var results = await Process.run(scriptPath, [inputPath]);
