@@ -12,7 +12,7 @@ import 'package:custom_element_apigen/generate_dart_api.dart' as generator;
 
 main(args) async {
   generator.GlobalConfig config =
-      generator.parseArgs(args, 'pub run custom_elements_apigen:update');
+      await generator.parseArgs(args, 'pub run custom_elements_apigen:update');
 
   // TODO(sigmund): find out if we can use a bower override for this.
   var file = new File(path.join('lib', 'src', 'polymer', 'polymer.html'));

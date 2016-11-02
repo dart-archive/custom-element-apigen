@@ -14,6 +14,7 @@ import 'src/ast.dart';
 import 'src/codegen.dart';
 import 'src/config.dart';
 export 'src/config.dart' show GlobalConfig;
+import 'package:package_resolver/package_resolver.dart';
 
 bool verbose = false;
 
@@ -21,7 +22,7 @@ bool verbose = false;
 typedef File FileFactory(String path);
 File defaultCreateFile(String path) => new File(path);
 
-GlobalConfig parseArgs(args, String program) {
+Future<GlobalConfig> parseArgs(args, String program) async {
   if (args.length == 0) {
     print('usage: call this tool with either input files '
         'or a configuration file that describes input files and name '
@@ -32,13 +33,16 @@ GlobalConfig parseArgs(args, String program) {
     exit(1);
   }
 
+  PackageResolver resolver = await PackageResolver.loadConfig(".packages");
+
   var config = new GlobalConfig();
+  config.packageResolver = resolver;
   for (var arg in args) {
     if (arg.endsWith('.html')) {
       config.files.add(new FileConfig(config, arg));
     } else if (arg.endsWith('.yaml')) {
       _progress('Parsing configuration ... ');
-      parseConfigFile(arg, config);
+      await parseConfigFile(arg, config);
     }
   }
 
@@ -148,8 +152,10 @@ void _generateImportStub(
 /// generates a FileSummary for it.
 Future<FileSummary> _parseFile(String inputPath, GlobalConfig globalConfig,
     {bool ignoreFileErrors: false}) async {
-  var results = await Process.run(
-      'packages/custom_element_apigen/src/js/process_elements.sh', [inputPath]);
+  String scriptPath = (await globalConfig.packageResolver.resolveUri("package:custom_element_apigen/src/js/process_elements.sh")).toFilePath();
+
+  //inputPath = path.absolute(inputPath);
+  var results = await Process.run(scriptPath, [inputPath]);
   if (results.exitCode != 0 || results.stderr != '') _parseError(results);
 
   var jsonFileSummary;
