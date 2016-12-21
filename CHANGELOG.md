@@ -1,3 +1,8 @@
+## 0.2.4
+  * Added compatibility with dart 1.20+ (`.packages` file support)
+## 0.2.3
+  * Added an "overrides" option to completely overrides code generation
+
 ## 0.2.2+1
   
   * Update for `path` API changes 

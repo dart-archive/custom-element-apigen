@@ -14,3 +14,32 @@ files_to_generate:
   - example_multi_behavior/example_multi_behavior.html
   - example_multi_deep_behavior/example_multi_deep_behavior.html
   - example_element_with_deep_behavior/example_element_with_deep_behavior.html
+  - example_element_with_overrides/example_element_with_overrides.html:
+      overrides:
+       ExampleElementWithOverrides:
+        computedFunction:
+         - "/// This is overridden"
+         - "void computedFunction(x,y,z) => jsElement.callMethod('computedFunction',[x,y,z]);"
+        elementToBeOverriddenFunction:
+         - "/// Provide var args"
+         - "void elementToBeOverriddenFunction(List varargs) => jsElement.callMethod('elementToBeOverriddenFunction',varargs);"
+        someHandler:
+         - "/// This is actually a property"
+         - "get someHandler => jsElement['someHandler'];"
+         - "set someHandler(f) => jsElement['someHandler'] = f;"
+        myCustomMapping:
+         get:
+          - "/// get the custom object"
+          - "get myCustomMapping => _toDart(jsElement['myCustomMapping']);"
+          - "_toDart(x) {"
+          - "  // Some code that will map x to the proper type"
+          - "  return x;"
+          - "}"
+         set:
+          - "/// set the custom object"
+          - "set myCustomMapping(v) => jsElement['myCustomMapping']=_toJs(v);"
+          - "_toJs(x) {"
+          - "  // Some code that will create the proper js rappresentation of x"
+          - "  return new JsObject.jsify(x);"
+          - "}"
+
