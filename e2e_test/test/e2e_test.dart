@@ -10,7 +10,7 @@ _mockFileFactory(String path) => new MockFile(path);
 
 main() {
   test('can generate wrappers', () async {
-    var config = parseArgs(['behavior_config.yaml'], '');
+    var config = await parseArgs(['behavior_config.yaml'], '');
     await generateWrappers(config, createFile: _mockFileFactory);
     expectFilesCreated('example_behavior');
     expectFilesCreated('example_element');
