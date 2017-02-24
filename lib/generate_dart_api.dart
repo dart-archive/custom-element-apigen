@@ -156,7 +156,7 @@ Future<FileSummary> _parseFile(String inputPath, GlobalConfig globalConfig,
           .resolveUri("package:custom_element_apigen/src/js/analyze.js"))
       .toFilePath();
 
-  var results = await Process.run("node", [scriptPath, inputPath]);
+  var results = await Process.run("node", [scriptPath, inputPath.replaceAll('%',r'%25')]);
   if (results.exitCode != 0 || results.stderr != '') _parseError(results);
 
   var jsonFileSummary;

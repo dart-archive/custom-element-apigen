@@ -209,9 +209,7 @@ Future _parseFilesToLoad(yaml, GlobalConfig config) async {
       return platformIndependentPath(parts[0]);
     } else if (parts.length == 2 && parts[0] == 'package') {
       Uri uri = await config.packageResolver.resolveUri(filePath);
-      String p = platformIndependentPath(uri.toFilePath());
-      p = p.replaceAll("%", r'%25'); // Reset url encoding
-      return p;
+      return platformIndependentPath(uri.toFilePath());
     } else {
       throw 'Unrecognized path `$filePath`. Should be a relative uri or a '
           '`package:` style uri.';
