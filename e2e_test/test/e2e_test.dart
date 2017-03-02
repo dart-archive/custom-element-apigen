@@ -10,7 +10,7 @@ _mockFileFactory(String path) => new MockFile(path);
 
 main() {
   test('can generate wrappers', () async {
-    var config = parseArgs(['behavior_config.yaml'], '');
+    var config = await parseArgs(['behavior_config.yaml'], '');
     await generateWrappers(config, createFile: _mockFileFactory);
     expectFilesCreated('example_behavior');
     expectFilesCreated('example_element');
@@ -18,6 +18,7 @@ main() {
     expectFilesCreated('example_multi_behavior');
     expectFilesCreated('example_multi_deep_behavior');
     expectFilesCreated('example_element_with_deep_behavior');
+    expectFilesCreated('example_element_with_overrides');
   });
 }
 
@@ -29,9 +30,16 @@ void expectFilesCreated(String name) {
   expectContainsFile('lib/$name.html');
   expectContainsFile('lib/${name}_nodart.html');
   expectContainsFile('lib/$name.dart');
-  expect(MockFile.createdFiles
-          .firstWhere((f) => f.path == 'lib/$name.dart').contents,
+  expect(
+      _('expected/${name}.dart',MockFile.createdFiles
+          .firstWhere((f) => f.path == 'lib/$name.dart')
+          .contents),
       readExpected(name));
+}
+
+_(fn,x) {
+	new File(fn).writeAsString(x);
+ return x;
 }
 
 String readExpected(String name) =>
